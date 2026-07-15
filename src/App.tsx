@@ -1,0 +1,156 @@
+import React, { useState, useEffect } from 'react';
+import { AppProvider } from './context/AppContext';
+import { Navbar } from './components/Navbar';
+import { Home } from './pages/Home';
+import { Browse } from './pages/Browse';
+import { ToolDetail } from './pages/ToolDetail';
+import { HowItWorks } from './pages/HowItWorks';
+import { Login } from './pages/Login';
+import { SignUp } from './pages/SignUp';
+import { Dashboard } from './pages/Dashboard';
+import { MyListings } from './pages/MyListings';
+import { AddTool } from './pages/AddTool';
+import { MyBookings } from './pages/MyBookings';
+import { BookingRequests } from './pages/BookingRequests';
+import { Profile } from './pages/Profile';
+
+const MainContent: React.FC = () => {
+  const [activePage, setActivePage] = useState<string>('home');
+  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activePage, selectedToolId]);
+
+  const handleSelectTool = (toolId: string) => {
+    setSelectedToolId(toolId);
+    setActivePage('tool-detail');
+  };
+
+  const handleNavigate = (page: string) => {
+    setSelectedToolId(null);
+    setActivePage(page);
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-white text-slate-900">
+      <Navbar
+        activePage={activePage}
+        setActivePage={handleNavigate}
+        setSelectedToolId={setSelectedToolId}
+      />
+
+      <main className="flex-1">
+        {activePage === 'home' && (
+          <Home onSelectTool={handleSelectTool} onNavigate={handleNavigate} />
+        )}
+        {activePage === 'browse' && (
+          <Browse onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'tool-detail' && selectedToolId && (
+          <ToolDetail toolId={selectedToolId} onNavigate={handleNavigate} />
+        )}
+        {activePage === 'how-it-works' && (
+          <HowItWorks onNavigate={handleNavigate} />
+        )}
+        {activePage === 'login' && (
+          <Login onNavigate={handleNavigate} />
+        )}
+        {activePage === 'signup' && (
+          <SignUp onNavigate={handleNavigate} />
+        )}
+        {activePage === 'dashboard' && (
+          <Dashboard onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'my-listings' && (
+          <MyListings onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'add-tool' && (
+          <AddTool onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'my-bookings' && (
+          <MyBookings onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'booking-requests' && (
+          <BookingRequests onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'profile' && (
+          <Profile onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-navy-950 text-slate-300 border-t border-navy-900 pt-16 pb-12 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-navy-800">
+          <div className="space-y-4 md:col-span-1">
+            <div className="flex items-center gap-3">
+              <img src="/icon.png" alt="Assetex Logo" className="h-10 w-auto object-contain" />
+              <span className="text-2xl font-extrabold text-white tracking-tight">Assetex</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              The peer-to-peer equipment sharing marketplace. Borrow tools you need for the day, or earn extra income from the tools you own.
+            </p>
+            <div className="text-xs font-bold text-emerald-400">
+              100% Insured & Verified Neighbors
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-white">Explore Equipment</h4>
+            <ul className="space-y-2 text-xs text-slate-400">
+              <li><button onClick={() => handleNavigate('browse')} className="hover:text-brand-300 transition-colors">All Categories</button></li>
+              <li><button onClick={() => handleNavigate('browse')} className="hover:text-brand-300 transition-colors">3D Printing & Fabrication</button></li>
+              <li><button onClick={() => handleNavigate('browse')} className="hover:text-brand-300 transition-colors">Power Tools & Carpentry</button></li>
+              <li><button onClick={() => handleNavigate('browse')} className="hover:text-brand-300 transition-colors">Gardening & Outdoor</button></li>
+              <li><button onClick={() => handleNavigate('browse')} className="hover:text-brand-300 transition-colors">Home Improvement</button></li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-white">Lending & Earning</h4>
+            <ul className="space-y-2 text-xs text-slate-400">
+              <li><button onClick={() => handleNavigate('how-it-works')} className="hover:text-brand-300 transition-colors">How Peer-to-Peer Works</button></li>
+              <li><button onClick={() => handleNavigate('add-tool')} className="hover:text-brand-300 transition-colors">List Your Tools</button></li>
+              <li><button onClick={() => handleNavigate('how-it-works')} className="hover:text-brand-300 transition-colors">Insurance & Damage Protection</button></li>
+              <li><button onClick={() => handleNavigate('how-it-works')} className="hover:text-brand-300 transition-colors">Service Fee Transparency</button></li>
+            </ul>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className="text-xs font-extrabold uppercase tracking-wider text-white">Prototype Notice</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              This is a fully clickable functional prototype designed to demonstrate the complete booking request and approval lifecycle without requiring live payment checkout.
+            </p>
+            <button
+              onClick={() => {
+                handleNavigate('dashboard');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="px-3.5 py-2 rounded-xl bg-brand-600/30 hover:bg-brand-600/50 border border-brand-500/40 text-brand-300 text-xs font-bold transition-all"
+            >
+              Open Unified Dashboard
+            </button>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>© {new Date().getFullYear()} Assetex Marketplace Inc. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <span>Privacy Policy</span>
+            <span>Terms of Service</span>
+            <span>Trust & Safety</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default function App() {
+  return (
+    <AppProvider>
+      <MainContent />
+    </AppProvider>
+  );
+}
