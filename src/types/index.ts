@@ -92,6 +92,6 @@ export interface FilterState {
   searchQuery: string;
   category: string;
   maxPrice: number;
-  sortBy: 'price-asc' | 'price-desc' | 'rating' | 'distance';
+  sortBy: 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'distance';
   location: string;
 }

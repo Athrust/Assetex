@@ -51,13 +51,13 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
 
         <div className="relative pt-2 pb-6 flex justify-center items-center z-20 lg:absolute lg:top-3 lg:left-0 lg:w-full lg:pt-0 lg:pb-0">
-          <img src="/logo.png" alt="ASSETEX Logo" className="h-28 sm:h-40 lg:h-52 max-w-[92%] sm:max-w-[85%] lg:max-w-none w-auto object-contain drop-shadow-lg cursor-pointer hover:scale-105 transition-all duration-200" onClick={() => {
+          <img src="/logo.png?v=assetex_3d_v2" alt="ASSETEX Logo" className="h-28 sm:h-40 lg:h-52 max-w-[92%] sm:max-w-[85%] lg:max-w-none w-auto object-contain drop-shadow-lg cursor-pointer hover:scale-105 transition-all duration-200" onClick={() => {
             setFilterState({
               searchQuery: '',
               category: 'All Categories',
-              sortBy: 'featured',
-              maxPrice: 10000,
-              onlyAvailable: false
+              sortBy: 'rating',
+              maxPrice: 6000,
+              location: 'All Austin'
             });
             onNavigate('browse');
           }} />

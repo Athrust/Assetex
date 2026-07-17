@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Wrench, User, Mail, Phone, Lock, MapPin, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Phone, Lock, MapPin, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface SignUpProps {
   onNavigate: (page: string) => void;
@@ -56,7 +56,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
     <div className="max-w-md mx-auto py-14 px-4 sm:px-6 space-y-6 animate-in fade-in duration-300">
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3.5 mb-3">
-          <img src="/logo.png" alt="ASSETEX Logo" className="h-16 w-auto object-contain drop-shadow" />
+          <img src="/logo.png?v=assetex_3d_v2" alt="ASSETEX Logo" className="h-16 w-auto object-contain drop-shadow" />
           <span className="font-outfit text-3xl font-black tracking-tight text-slate-900">
             ASSETEX
           </span>

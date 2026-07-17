@@ -2,7 +2,6 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import { getCategoryIcon } from '../components/ToolCard';
 import { 
-  PlusCircle, 
   Plus,
   Wrench, 
   Star, 

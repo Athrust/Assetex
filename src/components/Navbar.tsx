@@ -66,9 +66,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
     setFilterState({
       searchQuery: '',
       category: 'All Categories',
-      sortBy: 'featured',
-      maxPrice: 10000,
-      onlyAvailable: false
+      sortBy: 'rating',
+      maxPrice: 6000,
+      location: 'All Austin'
     });
     setActivePage('browse');
     setUserDropdownOpen(false);
@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
           onClick={handleLogoClick}
           className="flex items-center gap-0 sm:gap-0.5 cursor-pointer group shrink-0"
         >
-          <img src="/logo.png" alt="Assetex Logo" className="h-[5rem] w-auto object-contain translate-y-1.5 sm:translate-y-2 -mr-2 sm:-mr-3 drop-shadow-md group-hover:scale-105 transition-all duration-200" />
+          <img src="/logo.png?v=assetex_3d_v2" alt="Assetex Logo" className="h-[5rem] w-auto object-contain translate-y-1.5 sm:translate-y-2 -mr-2 sm:-mr-3 drop-shadow-md group-hover:scale-105 transition-all duration-200" />
           <div className="-ml-1 sm:-ml-1.5">
             <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
               Assetex
