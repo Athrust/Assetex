@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { getCategoryIcon } from '../components/ToolCard';
 import { 
   PlusCircle, 
+  Plus,
   Wrench, 
   Star, 
   Trash2, 
@@ -18,7 +19,7 @@ interface MyListingsProps {
 }
 
 export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool }) => {
-  const { user, listings, toggleListingStatus, deleteListing } = useApp();
+  const { user, listings, bookings, toggleListingStatus, deleteListing } = useApp();
 
   if (!user) {
     return (
@@ -30,7 +31,15 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
     );
   }
 
-  const myListings = listings.filter(l => l.ownerId === user.id);
+  const myListings = listings.filter(l => Boolean(
+    user && (
+      l.ownerId === user.id ||
+      l.owner?.id === user.id ||
+      (user.name && l.owner?.name && user.name.trim().toLowerCase() === l.owner.name.trim().toLowerCase())
+    )
+  ));
+
+  const totalPendingRequests = bookings.filter(b => myListings.some(l => l.id === b.toolId) && b.status === 'Pending').length;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-in fade-in duration-300">
@@ -38,11 +47,11 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold mb-2">
             <Wrench className="w-3.5 h-3.5" />
-            Lending Hub
+            Lender Dashboard
           </div>
           <h1 className="text-3xl font-extrabold text-navy-900">My Tool Listings ({myListings.length})</h1>
           <p className="text-sm text-slate-600 mt-1">
-            Manage your listed equipment, toggle availability, and add new tools to earn passive income.
+            Manage your equipment availability, pricing, and active rentals.
           </p>
         </div>
 
@@ -50,14 +59,36 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
           onClick={() => onNavigate('add-tool')}
           className="btn-primary py-3 px-6 gap-2 text-sm shadow-md shadow-brand-600/20 whitespace-nowrap"
         >
-          <PlusCircle className="w-5 h-5" />
+          <Plus className="w-4 h-4 stroke-[3]" />
           + Add New Tool
         </button>
       </div>
 
+      {totalPendingRequests > 0 && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-2xl bg-amber-500 text-white font-black text-lg flex items-center justify-center shrink-0 shadow-sm">
+              {totalPendingRequests}
+            </span>
+            <div>
+              <h3 className="text-base font-extrabold text-navy-900">Incoming Rental Applications Need Your Approval!</h3>
+              <p className="text-xs text-amber-900">Neighbors have requested dates to borrow your equipment. Review and accept/decline right now.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('booking-requests')}
+            className="btn-primary py-2.5 px-5 bg-amber-600 hover:bg-amber-700 border-amber-500 text-xs shadow-sm whitespace-nowrap"
+          >
+            Review Applications →
+          </button>
+        </div>
+      )}
+
       {myListings.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {myListings.map(tool => (
+          {myListings.map(tool => {
+            const pendingToolBookings = bookings.filter(b => b.toolId === tool.id && b.status === 'Pending').length;
+            return (
             <div 
               key={tool.id}
               className={`bg-white rounded-3xl border overflow-hidden shadow-soft flex flex-col justify-between transition-all ${
@@ -65,6 +96,14 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
               }`}
             >
               <div>
+                {pendingToolBookings > 0 && (
+                  <button
+                    onClick={() => onNavigate('booking-requests')}
+                    className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+                  >
+                    🔔 {pendingToolBookings} Pending Request{pendingToolBookings > 1 ? 's' : ''} — Review Now →
+                  </button>
+                )}
                 {/* Image header */}
                 <div className="relative aspect-[16/9] w-full bg-slate-100 overflow-hidden">
                   <img src={tool.image} alt={tool.title} className="w-full h-full object-cover" />
@@ -154,7 +193,8 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center max-w-lg mx-auto my-12 space-y-4 shadow-soft">

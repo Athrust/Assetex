@@ -400,7 +400,11 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
           
           {/* Grid of Listings */}
           {filteredListings.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-6 sm:gap-8">
+            <div className={
+              filteredListings.length === 1 
+                ? "max-w-[360px] sm:max-w-[400px] mx-auto lg:mx-0" 
+                : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 gap-6 sm:gap-8"
+            }>
               {filteredListings.map(tool => (
                 <ToolCard key={tool.id} tool={tool} onSelect={onSelectTool} />
               ))}

@@ -15,7 +15,7 @@ interface BookingRequestsProps {
 }
 
 export const BookingRequests: React.FC<BookingRequestsProps> = ({ onNavigate, onSelectTool }) => {
-  const { user, bookings, updateBookingStatus } = useApp();
+  const { user, listings, bookings, updateBookingStatus } = useApp();
   const [activeTab, setActiveTab] = useState<'all' | 'Pending' | 'Approved' | 'Declined'>('all');
 
   if (!user) {
@@ -28,8 +28,20 @@ export const BookingRequests: React.FC<BookingRequestsProps> = ({ onNavigate, on
     );
   }
 
+  const myToolIds = listings
+    .filter(l => Boolean(user && (
+      l.ownerId === user.id || 
+      l.owner?.id === user.id || 
+      (user.name && l.owner?.name && l.owner.name.trim().toLowerCase() === user.name.trim().toLowerCase())
+    )))
+    .map(l => l.id);
+
   // Incoming requests where I am the OWNER
-  const incomingRequests = bookings.filter(b => b.ownerId === user.id);
+  const incomingRequests = bookings.filter(b => Boolean(user && (
+    b.ownerId === user.id ||
+    (user.name && b.ownerName && user.name.trim().toLowerCase() === b.ownerName.trim().toLowerCase()) ||
+    myToolIds.includes(b.toolId)
+  )));
 
   const filteredRequests = incomingRequests.filter(b => {
     if (activeTab === 'all') return true;

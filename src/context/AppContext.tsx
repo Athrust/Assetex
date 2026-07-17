@@ -9,7 +9,8 @@ import type {
 } from '../types';
 
 
-const API_URL = 'http://localhost:5001/api';
+const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+const API_URL = `http://${hostname}:5001/api`;
 
 interface AppContextType {
   user: UserAccount | null;
@@ -162,11 +163,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const addListing = async (data: Omit<ToolListing, 'id' | 'ownerId' | 'owner' | 'rating' | 'reviewCount' | 'reviews'>): Promise<string> => {
     if (!user) return '';
+    const payload = {
+      ...data,
+      ownerId: user.id,
+      owner: {
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        rating: user.rating || 5.0,
+        reviewsCount: user.reviewsCount || 0,
+        responseTime: 'Usually responds within 1 hour',
+        responseRate: '100%',
+        verified: user.verified !== undefined ? user.verified : true,
+        memberSince: user.memberSince || 'Just now',
+        city: user.city || data.location || 'Austin, TX',
+        bio: user.bio || 'Neighborhood lender on Assetex.'
+      }
+    };
     try {
       const res = await fetch(`${API_URL}/listings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         const newListing = await res.json();
@@ -176,7 +194,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     } catch (error) {
       console.error('Add listing failed:', error);
     }
-    return '';
+    const fallbackId = `tool-${Date.now()}`;
+    const fallbackListing: ToolListing = {
+      ...payload,
+      id: fallbackId,
+      rating: 5.0,
+      reviewCount: 0,
+      reviews: []
+    };
+    setListings(prev => [fallbackListing, ...prev]);
+    return fallbackId;
   };
 
   const updateListing = async (id: string, data: Partial<ToolListing>): Promise<void> => {
@@ -217,22 +244,57 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const requestBooking = async (toolId: string, startDate: string, endDate: string, message: string): Promise<Booking> => {
     if (!user) throw new Error("User not logged in");
+    const targetTool = listings.find(l => l.id === toolId);
+    if (!targetTool) throw new Error("Tool not found");
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+    const totalEstimate = days * targetTool.dailyRate;
+
+    const payload = {
+      toolId,
+      toolTitle: targetTool.title,
+      toolImage: targetTool.image,
+      toolCategory: targetTool.category,
+      startDate,
+      endDate,
+      message,
+      days,
+      dailyRate: targetTool.dailyRate,
+      totalEstimate,
+      renterId: user.id,
+      renterName: user.name,
+      renterAvatar: user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      renterRating: user.rating || 5.0,
+      ownerId: targetTool.ownerId || 'user-alex',
+      ownerName: targetTool.owner?.name || 'Tool Owner'
+    };
+
     try {
       const res = await fetch(`${API_URL}/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ toolId, startDate, endDate, message })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         const newBooking = await res.json();
         setBookings(prev => [newBooking, ...prev]);
         return newBooking;
       } else {
-        throw new Error("Failed to create booking");
+        throw new Error("Failed to create booking on backend");
       }
     } catch (error) {
-      console.error('Request booking failed:', error);
-      throw error;
+      console.warn('Backend request booking failed, creating client booking:', error);
+      const fallbackBooking: Booking = {
+        ...payload,
+        id: `book-${Date.now()}`,
+        status: 'Pending',
+        createdAt: new Date().toISOString().split('T')[0]
+      };
+      setBookings(prev => [fallbackBooking, ...prev]);
+      return fallbackBooking;
     }
   };
 

@@ -28,7 +28,7 @@ const navCategories = [
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSelectedToolId }) => {
-  const { user, logout, bookings, setFilterState } = useApp();
+  const { user, logout, listings, bookings, setFilterState } = useApp();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [navQuery, setNavQuery] = useState('');
   const [navCat, setNavCat] = useState('All');
@@ -38,12 +38,39 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
     return null;
   }
 
-  // Count incoming requests that are Pending for Alex's tools
-  const pendingIncomingRequests = bookings.filter(b => b.ownerId === user?.id && b.status === 'Pending').length;
+  const myToolIds = listings
+    .filter(l => Boolean(user && (
+      l.ownerId === user.id || 
+      l.owner?.id === user.id || 
+      (user.name && l.owner?.name && l.owner.name.trim().toLowerCase() === user.name.trim().toLowerCase())
+    )))
+    .map(l => l.id);
+
+  // Count incoming requests that are Pending for user's tools
+  const pendingIncomingRequests = bookings.filter(b => Boolean(user && b.status === 'Pending' && (
+    b.ownerId === user.id ||
+    (user.name && b.ownerName && user.name.trim().toLowerCase() === b.ownerName.trim().toLowerCase()) ||
+    myToolIds.includes(b.toolId)
+  ))).length;
 
   const handleNav = (page: string) => {
     setSelectedToolId(null);
     setActivePage(page);
+    setUserDropdownOpen(false);
+  };
+
+  const handleLogoClick = () => {
+    setSelectedToolId(null);
+    setNavQuery('');
+    setNavCat('All');
+    setFilterState({
+      searchQuery: '',
+      category: 'All Categories',
+      sortBy: 'featured',
+      maxPrice: 10000,
+      onlyAvailable: false
+    });
+    setActivePage('browse');
     setUserDropdownOpen(false);
   };
 
@@ -59,15 +86,15 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
 
   return (
     <header className="glass-header w-full shadow-sm sticky top-0 z-50">
-      <div className="w-full px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 min-h-20 sm:min-h-24 py-2 flex items-center justify-between gap-2 sm:gap-4 md:gap-6">
 
         {/* Brand Logo (Left) */}
         <div
-          onClick={() => handleNav('home')}
-          className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
+          onClick={handleLogoClick}
+          className="flex items-center gap-0 sm:gap-0.5 cursor-pointer group shrink-0"
         >
-          <img src="/icon.png" alt="Assetex Logo" className="h-9 sm:h-11 w-auto object-contain group-hover:scale-105 transition-transform duration-200" />
-          <div>
+          <img src="/logo.png" alt="Assetex Logo" className="h-[5rem] w-auto object-contain translate-y-1.5 sm:translate-y-2 -mr-2 sm:-mr-3 drop-shadow-md group-hover:scale-105 transition-all duration-200" />
+          <div className="-ml-1 sm:-ml-1.5">
             <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
               Assetex
             </span>
@@ -77,10 +104,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
           </div>
         </div>
 
-        {/* Amazon-Style Wide Search Bar (Desktop / Tablet) */}
+        {/* Amazon-Style Wide Search Bar (Desktop Large Screens Only) */}
         <form
           onSubmit={handleNavSearchSubmit}
-          className="flex-1 max-w-4xl hidden sm:flex items-center shadow-sm rounded-xl overflow-hidden border-2 border-slate-300 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 transition-all bg-white"
+          className="flex-1 max-w-4xl hidden lg:flex items-center shadow-sm rounded-xl overflow-hidden border-2 border-slate-300 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-600/20 transition-all bg-white"
         >
           {/* Category Dropdown (Left side of input) */}
           <select
@@ -114,57 +141,75 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
           </button>
         </form>
 
-        {/* Right Action Area: My Products/Rentals shifted left, Profile shifted rightmost */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        {/* Right Action Area: My Products/Rentals/ListProduct (Desktop >= 1024px), Tablet List Product, Profile (Universal) */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
 
-          {/* My Products Option (Manage requests) - shifted to left of profile */}
-          <button
-            onClick={() => {
-              if (!user) {
-                handleNav('login');
-              } else {
-                handleNav('booking-requests');
-              }
-            }}
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl hover:bg-white/15 transition-all cursor-pointer group border border-transparent hover:border-white/20"
-            title="My Products & Approvals"
-          >
-            <div className="relative">
-              <ListOrdered className="w-7 h-7 text-white group-hover:scale-105 transition-transform stroke-[2]" />
-              {pendingIncomingRequests > 0 && (
-                <span className="absolute -top-1 -right-2 bg-amber-400 text-slate-950 font-black text-xs px-1.5 py-0.5 rounded-full border-2 border-[#7575a3] shadow-sm leading-none min-w-[1.25rem] text-center">
-                  {pendingIncomingRequests}
-                </span>
-              )}
-            </div>
-            <div className="hidden lg:block text-left">
-              <span className="block text-[11px] text-white/70 font-semibold leading-none">Approvals</span>
-              <span className="text-sm font-extrabold text-white leading-none mt-0.5 block">My Products</span>
-            </div>
-          </button>
+            {/* My Products Option (Manage requests) */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  handleNav('login');
+                } else {
+                  handleNav('booking-requests');
+                }
+              }}
+              className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl hover:bg-white/15 transition-all cursor-pointer group border border-transparent hover:border-white/20"
+              title="My Products & Approvals"
+            >
+              <div className="relative">
+                <ListOrdered className="w-7 h-7 text-white group-hover:scale-105 transition-transform stroke-[2]" />
+                {pendingIncomingRequests > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-amber-400 text-slate-950 font-black text-xs px-1.5 py-0.5 rounded-full border-2 border-[#7575a3] shadow-sm leading-none min-w-[1.25rem] text-center">
+                    {pendingIncomingRequests}
+                  </span>
+                )}
+              </div>
+              <div className="hidden lg:block text-left">
+                <span className="block text-[11px] text-white/70 font-semibold leading-none">Approvals</span>
+                <span className="text-sm font-extrabold text-white leading-none mt-0.5 block">My Products</span>
+              </div>
+            </button>
 
-          {/* My Past Rentals Option - shifted to left of profile */}
-          <button
-            onClick={() => {
-              if (!user) {
-                handleNav('login');
-              } else {
-                handleNav('my-bookings');
-              }
-            }}
-            className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl hover:bg-white/15 transition-all cursor-pointer group border border-transparent hover:border-white/20"
-            title="Past Rentals"
-          >
-            <div className="relative">
-              <Calendar className="w-7 h-7 text-white group-hover:scale-105 transition-transform stroke-[2]" />
-            </div>
-            <div className="hidden lg:block text-left">
-              <span className="block text-[11px] text-white/70 font-semibold leading-none">Timings</span>
-              <span className="text-sm font-extrabold text-white leading-none mt-0.5 block">Past Rentals</span>
-            </div>
-          </button>
+            {/* My Past Rentals Option */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  handleNav('login');
+                } else {
+                  handleNav('my-bookings');
+                }
+              }}
+              className="flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl hover:bg-white/15 transition-all cursor-pointer group border border-transparent hover:border-white/20"
+              title="Past Rentals"
+            >
+              <div className="relative">
+                <Calendar className="w-7 h-7 text-white group-hover:scale-105 transition-transform stroke-[2]" />
+              </div>
+              <div className="hidden lg:block text-left">
+                <span className="block text-[11px] text-white/70 font-semibold leading-none">Timings</span>
+                <span className="text-sm font-extrabold text-white leading-none mt-0.5 block">Past Rentals</span>
+              </div>
+            </button>
 
-          {/* List Product Option - just left side of profile photo */}
+            {/* List Product Option (Desktop) */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  handleNav('login');
+                } else {
+                  handleNav('add-tool');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#febd69] hover:bg-[#f3a847] text-slate-950 font-black transition-all cursor-pointer shadow-sm group border border-[#a88734]/30 shrink-0"
+              title="List Your Product to Earn"
+            >
+              <PlusCircle className="w-5 h-5 text-slate-950 group-hover:scale-110 transition-transform stroke-[2.5]" />
+              <span className="text-sm font-extrabold tracking-tight leading-none">List Product</span>
+            </button>
+          </div>
+
+          {/* Tablet-Specific List Product Button (Shown on sm to lg screens in top row) */}
           <button
             onClick={() => {
               if (!user) {
@@ -173,10 +218,10 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
                 handleNav('add-tool');
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-2 sm:px-3.5 sm:py-2 rounded-xl bg-[#febd69] hover:bg-[#f3a847] text-slate-950 font-black transition-all cursor-pointer shadow-sm group border border-[#a88734]/30 shrink-0"
+            className="hidden sm:flex lg:hidden items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#febd69] hover:bg-[#f3a847] text-slate-950 font-black transition-all cursor-pointer shadow-sm border border-[#a88734]/30 shrink-0"
             title="List Your Product to Earn"
           >
-            <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 group-hover:scale-110 transition-transform stroke-[2.5]" />
+            <PlusCircle className="w-4 h-4 text-slate-950 stroke-[2.5]" />
             <span className="text-xs sm:text-sm font-extrabold tracking-tight leading-none">List Product</span>
           </button>
 
@@ -334,21 +379,124 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
         </div>
       </div>
 
-      {/* Mobile Compact Search Bar (Shown on small screens where center search bar hides) */}
-      <div className="sm:hidden px-4 pb-3">
-        <form onSubmit={handleNavSearchSubmit} className="flex items-center shadow-sm rounded-xl overflow-hidden border border-slate-300 bg-white">
+      {/* Tablet & Mobile Quick Action Bar & Search Bar (Shown on < 1024px below the top row) */}
+      <div className="lg:hidden px-4 pt-2 pb-3.5 space-y-3 border-t border-white/10">
+        
+        {/* Mobile Grid (Small phone screens < 640px) */}
+        <div className="grid sm:hidden grid-cols-3 gap-1.5">
+          {/* My Products / Approvals */}
+          <button
+            onClick={() => {
+              if (!user) {
+                handleNav('login');
+              } else {
+                handleNav('booking-requests');
+              }
+            }}
+            className="flex items-center justify-center gap-1 py-1.5 px-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all cursor-pointer border border-white/15 shadow-sm"
+          >
+            <div className="relative shrink-0">
+              <ListOrdered className="w-4 h-4 text-white stroke-[2.5]" />
+              {pendingIncomingRequests > 0 && (
+                <span className="absolute -top-1 -right-1.5 bg-amber-400 text-slate-950 font-black text-[9px] px-1 rounded-full border border-[#7575a3] shadow-sm leading-none">
+                  {pendingIncomingRequests}
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] font-bold tracking-tight truncate">My Products</span>
+          </button>
+
+          {/* Past Rentals / Timings */}
+          <button
+            onClick={() => {
+              if (!user) {
+                handleNav('login');
+              } else {
+                handleNav('my-bookings');
+              }
+            }}
+            className="flex items-center justify-center gap-1 py-1.5 px-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all cursor-pointer border border-white/15 shadow-sm"
+          >
+            <Calendar className="w-4 h-4 text-white stroke-[2.5] shrink-0" />
+            <span className="text-[11px] font-bold tracking-tight truncate">Timings</span>
+          </button>
+
+          {/* List Product */}
+          <button
+            onClick={() => {
+              if (!user) {
+                handleNav('login');
+              } else {
+                handleNav('add-tool');
+              }
+            }}
+            className="flex items-center justify-center gap-1 py-1.5 px-2 bg-[#febd69] hover:bg-[#f3a847] rounded-xl text-slate-950 font-black transition-all cursor-pointer shadow-sm border border-[#a88734]/30"
+          >
+            <PlusCircle className="w-3.5 h-3.5 text-slate-950 stroke-[2.5] shrink-0" />
+            <span className="text-[11px] font-black tracking-tight truncate">List Product</span>
+          </button>
+        </div>
+
+        {/* Tablet Horizontal Actions (Tablet screens 640px to 1024px) */}
+        <div className="hidden sm:flex items-center justify-center gap-4">
+          {/* My Products / Approvals */}
+          <button
+            onClick={() => {
+              if (!user) {
+                handleNav('login');
+              } else {
+                handleNav('booking-requests');
+              }
+            }}
+            className="flex items-center gap-2.5 py-2 px-4 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all cursor-pointer border border-white/15 shadow-sm"
+          >
+            <div className="relative shrink-0">
+              <ListOrdered className="w-5 h-5 text-white stroke-[2]" />
+              {pendingIncomingRequests > 0 && (
+                <span className="absolute -top-1.5 -right-2 bg-amber-400 text-slate-950 font-black text-[10px] px-1.5 py-0.5 rounded-full border border-[#7575a3] shadow-sm leading-none">
+                  {pendingIncomingRequests}
+                </span>
+              )}
+            </div>
+            <div className="text-left leading-none">
+              <span className="block text-[10px] text-white/70 font-semibold">Approvals</span>
+              <span className="text-xs font-extrabold text-white">My Products</span>
+            </div>
+          </button>
+
+          {/* Past Rentals / Timings */}
+          <button
+            onClick={() => {
+              if (!user) {
+                handleNav('login');
+              } else {
+                handleNav('my-bookings');
+              }
+            }}
+            className="flex items-center gap-2.5 py-2 px-4 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all cursor-pointer border border-white/15 shadow-sm"
+          >
+            <Calendar className="w-5 h-5 text-white stroke-[2] shrink-0" />
+            <div className="text-left leading-none">
+              <span className="block text-[10px] text-white/70 font-semibold">Timings</span>
+              <span className="text-xs font-extrabold text-white">Past Rentals</span>
+            </div>
+          </button>
+        </div>
+
+        {/* Full-Width Search Bar for Tablet & Mobile */}
+        <form onSubmit={handleNavSearchSubmit} className="w-full max-w-3xl mx-auto flex items-center shadow-sm rounded-xl overflow-hidden border border-slate-300 bg-white">
           <input
             type="text"
-            placeholder="Search equipment..."
+            placeholder="Search equipment, cameras, drills, power tools..."
             value={navQuery}
             onChange={(e) => setNavQuery(e.target.value)}
-            className="flex-1 px-3 py-2 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none"
+            className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none"
           />
           <button
             type="submit"
-            className="bg-[#febd69] text-slate-950 font-extrabold px-4 py-2 flex items-center justify-center"
+            className="bg-[#febd69] hover:bg-[#f3a847] text-slate-950 font-extrabold px-5 py-2.5 flex items-center justify-center cursor-pointer"
           >
-            <Search className="w-4 h-4 stroke-[2.5]" />
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
           </button>
         </form>
       </div>

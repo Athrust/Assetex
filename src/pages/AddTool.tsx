@@ -9,7 +9,8 @@ import {
   Plus,
   Trash2,
   ArrowLeft,
-  Building
+  Building,
+  Upload
 } from 'lucide-react';
 
 interface AddToolProps {
@@ -58,6 +59,8 @@ const presetTemplates = [
   }
 ];
 
+const API_URL = 'http://localhost:5001/api';
+
 export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) => {
   const { user, addListing } = useApp();
 
@@ -79,6 +82,47 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
   
   const [specs, setSpecs] = useState<string[]>(['All original safety guards included', 'Inspected and cleaned prior to rental']);
   const [newSpecInput, setNewSpecInput] = useState('');
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      for (const file of filesArray) {
+        if (!file.type.startsWith('image/')) continue;
+        const reader = new FileReader();
+        reader.onload = async (uploadEvent) => {
+          if (uploadEvent.target?.result) {
+            const base64Data = uploadEvent.target!.result as string;
+            try {
+              const res = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  filename: file.name,
+                  dataUrl: base64Data
+                })
+              });
+              if (res.ok) {
+                const data = await res.json();
+                setImages(prev => {
+                  if (prev.length >= 12) return prev;
+                  return [...prev, data.url];
+                });
+                return;
+              }
+            } catch (err) {
+              console.warn('Backend image upload failed, falling back to data URL:', err);
+            }
+            setImages(prev => {
+              if (prev.length >= 12) return prev;
+              return [...prev, base64Data];
+            });
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+      setShowPhotoPopup(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -429,9 +473,34 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
                 </div>
 
                 <div className="space-y-4">
+                  {/* Option 1: Upload File directly from device */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">
-                      Choose Preset Template Photo
+                      1. Upload Image File from Your Device
+                    </label>
+                    <label className="border-2 border-dashed border-brand-500 bg-brand-50/60 hover:bg-brand-50 rounded-2xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all group shadow-sm">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        multiple 
+                        onChange={handleFileUpload} 
+                        className="hidden" 
+                      />
+                      <Upload className="w-8 h-8 text-brand-600 group-hover:scale-110 transition-transform mb-2" />
+                      <span className="text-xs font-extrabold text-navy-900 block">Click to browse local image files</span>
+                      <span className="text-[10px] font-semibold text-slate-500 mt-0.5">Supports PNG, JPG, WEBP, GIF (Up to 12 photos)</span>
+                    </label>
+                  </div>
+
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-slate-200"></div>
+                    <span className="flex-shrink mx-3 text-slate-400 text-[10px] font-black uppercase tracking-wider">Or Choose Template</span>
+                    <div className="flex-grow border-t border-slate-200"></div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">
+                      2. Choose Preset Template Photo
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       <button

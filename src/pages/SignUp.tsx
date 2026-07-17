@@ -55,8 +55,11 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
   return (
     <div className="max-w-md mx-auto py-14 px-4 sm:px-6 space-y-6 animate-in fade-in duration-300">
       <div className="text-center space-y-2">
-        <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-sm mb-3">
-          <Wrench className="w-7 h-7 -rotate-12" />
+        <div className="flex items-center justify-center gap-3.5 mb-3">
+          <img src="/logo.png" alt="ASSETEX Logo" className="h-16 w-auto object-contain drop-shadow" />
+          <span className="font-outfit text-3xl font-black tracking-tight text-slate-900">
+            ASSETEX
+          </span>
         </div>
         <h1 className="text-3xl font-black text-slate-900">Create your account</h1>
         <p className="text-sm text-slate-600">

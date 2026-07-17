@@ -16,7 +16,7 @@ interface MyBookingsProps {
 }
 
 export const MyBookings: React.FC<MyBookingsProps> = ({ onNavigate, onSelectTool }) => {
-  const { user, bookings } = useApp();
+  const { user, bookings, updateBookingStatus } = useApp();
 
   if (!user) {
     return (
@@ -28,7 +28,12 @@ export const MyBookings: React.FC<MyBookingsProps> = ({ onNavigate, onSelectTool
     );
   }
 
-  const myRentals = bookings.filter(b => b.renterId === user.id);
+  const myRentals = bookings.filter(b => Boolean(
+    user && (
+      b.renterId === user.id ||
+      (user.name && b.renterName && user.name.trim().toLowerCase() === b.renterName.trim().toLowerCase())
+    )
+  ));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-in fade-in duration-300">
@@ -124,6 +129,14 @@ export const MyBookings: React.FC<MyBookingsProps> = ({ onNavigate, onSelectTool
                     {book.status === 'Approved' && 'Coordinate pickup with the owner'}
                     {book.status === 'Declined' && 'Try requesting dates on another tool'}
                   </p>
+                  {book.status === 'Pending' && (
+                    <button
+                      onClick={() => updateBookingStatus(book.id, 'Declined')}
+                      className="mt-2 w-full py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-[11px] transition-all cursor-pointer"
+                    >
+                      Cancel Request
+                    </button>
+                  )}
                 </div>
 
                 <div className="pt-2 border-t border-slate-200/60 flex items-baseline justify-between sm:justify-end gap-2">

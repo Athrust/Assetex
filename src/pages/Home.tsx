@@ -51,7 +51,16 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
 
         <div className="relative pt-2 pb-6 flex justify-center items-center z-20 lg:absolute lg:top-3 lg:left-0 lg:w-full lg:pt-0 lg:pb-0">
-          <img src="/logo-full.png" alt="ASSETEX Logo" className="h-24 sm:h-36 lg:h-48 max-w-[92%] sm:max-w-[85%] lg:max-w-none w-auto object-contain mix-blend-multiply cursor-pointer hover:scale-105 transition-transform duration-200" onClick={() => onNavigate('home')} />
+          <img src="/logo.png" alt="ASSETEX Logo" className="h-28 sm:h-40 lg:h-52 max-w-[92%] sm:max-w-[85%] lg:max-w-none w-auto object-contain drop-shadow-lg cursor-pointer hover:scale-105 transition-all duration-200" onClick={() => {
+            setFilterState({
+              searchQuery: '',
+              category: 'All Categories',
+              sortBy: 'featured',
+              maxPrice: 10000,
+              onlyAvailable: false
+            });
+            onNavigate('browse');
+          }} />
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center w-full">

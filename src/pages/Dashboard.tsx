@@ -30,15 +30,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onSelectTool }
     );
   }
 
+  const myToolIds = listings
+    .filter(l => Boolean(user && (
+      l.ownerId === user.id || 
+      l.owner?.id === user.id || 
+      (user.name && l.owner?.name && l.owner.name.trim().toLowerCase() === user.name.trim().toLowerCase())
+    )))
+    .map(l => l.id);
+
   // Bookings where I am renting from others
-  const myRentals = bookings.filter(b => b.renterId === user.id);
+  const myRentals = bookings.filter(b => Boolean(
+    user && (
+      b.renterId === user.id ||
+      (user.name && b.renterName && user.name.trim().toLowerCase() === b.renterName.trim().toLowerCase())
+    )
+  ));
   
   // Bookings where OTHERS are renting MY listed tools
-  const incomingRequests = bookings.filter(b => b.ownerId === user.id);
+  const incomingRequests = bookings.filter(b => Boolean(user && (
+    b.ownerId === user.id ||
+    (user.name && b.ownerName && user.name.trim().toLowerCase() === b.ownerName.trim().toLowerCase()) ||
+    myToolIds.includes(b.toolId)
+  )));
   const pendingIncoming = incomingRequests.filter(b => b.status === 'Pending');
 
   // My listed tools
-  const myListings = listings.filter(l => l.ownerId === user.id);
+  const myListings = listings.filter(l => Boolean(user && (
+    l.ownerId === user.id || 
+    l.owner?.id === user.id || 
+    (user.name && l.owner?.name && l.owner.name.trim().toLowerCase() === user.name.trim().toLowerCase())
+  )));
 
   // Estimate potential earnings from approved/pending bookings on my tools
   const totalEarningsEstimate = incomingRequests.reduce((acc, curr) => acc + curr.totalEstimate, 0);

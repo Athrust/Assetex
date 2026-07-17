@@ -27,7 +27,13 @@ interface ToolDetailProps {
 export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) => {
   const { listings, user, bookings, requestBooking, deleteListing, updateBookingStatus } = useApp();
   const tool = listings.find(t => t.id === toolId);
-  const isOwner = Boolean(user && (user.id === tool?.ownerId || user.id === tool?.owner?.id));
+  const isOwner = Boolean(
+    user && tool && (
+      user.id === tool.ownerId ||
+      user.id === tool.owner?.id ||
+      (user.name && tool.owner?.name && user.name.trim().toLowerCase() === tool.owner.name.trim().toLowerCase())
+    )
+  );
   const toolBookings = bookings.filter(b => b.toolId === toolId);
 
   // Default dates for immediate prototype convenience

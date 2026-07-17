@@ -1,9 +1,9 @@
-import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import User from './models/User.js';
@@ -12,6 +12,7 @@ import Booking from './models/Booking.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env') });
 const DB_FILE = path.join(__dirname, 'db.json');
 
 const app = express();
@@ -20,7 +21,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'assetex_secure_jwt_secret_key_2026
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/assetex';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/api/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir));
 
 let useMongoDB = false;
 
@@ -474,26 +483,17 @@ mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 })
   .then(async () => {
     useMongoDB = true;
     console.log(`Connected to MongoDB successfully at ${MONGODB_URI.split('@')[1] || MONGODB_URI}`);
-    // Auto-seed if database is empty
-    const listingCount = await Listing.countDocuments();
-    if (listingCount === 0) {
-      console.log('Seeding initial MongoDB database...');
-      await User.deleteMany({});
-      await Listing.deleteMany({});
-      await Booking.deleteMany({});
-
-      // Seed Users / Owners
+    // Check and seed users only if none exist, leave listings clean
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      console.log('Seeding initial Users/Owners into MongoDB...');
       for (const key of Object.keys(initialOwners)) {
         await User.create(initialOwners[key]);
       }
-      // Seed Listings
-      await Listing.insertMany(initialListings);
-      // Seed Bookings
-      await Booking.insertMany(initialBookings);
-      console.log('MongoDB auto-seeding completed successfully!');
-    } else {
-      console.log(`MongoDB already has ${listingCount} listings. Ready to serve!`);
+      console.log('Users seeded.');
     }
+    const listingCount = await Listing.countDocuments();
+    console.log(`MongoDB currently has ${listingCount} active listings.`);
   })
   .catch(err => {
     console.warn(`[WARNING] MongoDB not reachable (${err.message}).`);
@@ -531,6 +531,30 @@ function writeDb(data) {
 }
 
 // REST Routes
+
+// Image Upload Endpoint
+app.post('/api/upload', (req, res) => {
+  try {
+    const { filename, dataUrl } = req.body;
+    if (!dataUrl) {
+      return res.status(400).json({ error: 'Image data is required' });
+    }
+    const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(400).json({ error: 'Invalid base64 data URL' });
+    }
+    const ext = matches[1].split('/')[1] || 'png';
+    const buffer = Buffer.from(matches[2], 'base64');
+    const safeName = `img-${Date.now()}-${Math.round(Math.random() * 1E9)}.${ext}`;
+    const filePath = path.join(uploadsDir, safeName);
+    fs.writeFileSync(filePath, buffer);
+    const imageUrl = `http://localhost:${PORT}/api/uploads/${safeName}`;
+    return res.status(201).json({ url: imageUrl, success: true });
+  } catch (err) {
+    console.error('Image upload error:', err);
+    return res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
 
 // 1. Auth / User endpoints
 app.post('/api/auth/login', async (req, res) => {
@@ -662,14 +686,14 @@ app.get('/api/listings', async (req, res) => {
 
 app.post('/api/listings', async (req, res) => {
   const newId = `tool-${Date.now()}`;
-  const ownerId = req.body.ownerId || initialCurrentUser.id;
+  let ownerId = req.body.ownerId || initialCurrentUser.id;
 
   if (useMongoDB) {
     try {
       let ownerUser = await User.findOne({ id: ownerId });
       if (!ownerUser) ownerUser = initialCurrentUser;
 
-      const ownerObj = {
+      const ownerObj = req.body.owner || {
         id: ownerUser.id,
         name: ownerUser.name,
         avatar: ownerUser.avatar,
@@ -701,28 +725,33 @@ app.post('/api/listings', async (req, res) => {
   }
 
   const db = readDb();
-  if (!db.currentUser) {
+  if (!db.currentUser && !req.body.ownerId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
 
-  const owner = db.owners[db.currentUser.id] || {
-    id: db.currentUser.id,
-    name: db.currentUser.name,
-    avatar: db.currentUser.avatar,
-    rating: db.currentUser.rating || 5.0,
-    reviewsCount: db.currentUser.reviewsCount || 0,
+  ownerId = req.body.ownerId || (db.currentUser ? db.currentUser.id : initialCurrentUser.id);
+  const owner = req.body.owner || db.owners[ownerId] || (db.currentUser && db.owners[db.currentUser.id] ? db.owners[db.currentUser.id] : {
+    id: ownerId,
+    name: db.currentUser ? db.currentUser.name : 'Atharv Mule',
+    avatar: db.currentUser ? db.currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    rating: 5.0,
+    reviewsCount: 0,
     responseTime: 'Usually responds within 1 hour',
     responseRate: '100%',
-    verified: db.currentUser.verified,
-    memberSince: db.currentUser.memberSince,
-    city: db.currentUser.city,
-    bio: db.currentUser.bio,
-  };
+    verified: true,
+    memberSince: '2026',
+    city: req.body.location || 'Austin, TX',
+    bio: 'Neighborhood lender on Assetex.'
+  });
+
+  if (db.currentUser && ownerId === db.currentUser.id) {
+    db.owners[ownerId] = owner;
+  }
 
   const newListing = {
     ...req.body,
     id: newId,
-    ownerId: db.currentUser.id,
+    ownerId,
     owner,
     status: 'active',
     rating: 5.0,
@@ -793,19 +822,30 @@ app.post('/api/bookings', async (req, res) => {
 
   if (useMongoDB) {
     try {
-      const targetTool = await Listing.findOne({ id: toolId });
+      let targetTool = await Listing.findOne({ id: toolId });
       if (!targetTool) {
-        return res.status(404).json({ error: 'Tool not found' });
+        targetTool = {
+          id: toolId,
+          title: req.body.toolTitle || 'Equipment Rental',
+          image: req.body.toolImage || '/images/1.png',
+          category: req.body.toolCategory || 'General Equipment',
+          dailyRate: req.body.dailyRate || 2800,
+          ownerId: req.body.ownerId || 'user-alex',
+          owner: { name: req.body.ownerName || 'Tool Owner' }
+        };
       }
 
-      let renter = await User.findOne({ id: req.body.renterId || initialCurrentUser.id });
-      if (!renter) renter = initialCurrentUser;
+      const renterId = req.body.renterId || initialCurrentUser.id;
+      let renter = await User.findOne({ id: renterId });
+      const renterName = req.body.renterName || (renter ? renter.name : initialCurrentUser.name);
+      const renterAvatar = req.body.renterAvatar || (renter ? renter.avatar : initialCurrentUser.avatar);
+      const renterRating = req.body.renterRating || (renter ? renter.rating : 5.0);
 
       const start = new Date(startDate);
       const end = new Date(endDate);
       const diffTime = Math.abs(end.getTime() - start.getTime());
-      const days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-      const totalEstimate = days * targetTool.dailyRate;
+      const days = req.body.days || Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const totalEstimate = req.body.totalEstimate || (days * (targetTool.dailyRate || 2800));
 
       const newBooking = await Booking.create({
         id: `book-${Date.now()}`,
@@ -813,12 +853,12 @@ app.post('/api/bookings', async (req, res) => {
         toolTitle: targetTool.title,
         toolImage: targetTool.image,
         toolCategory: targetTool.category,
-        renterId: renter.id,
-        renterName: renter.name,
-        renterAvatar: renter.avatar,
-        renterRating: renter.rating || 5.0,
-        ownerId: targetTool.ownerId,
-        ownerName: targetTool.owner?.name || 'Tool Owner',
+        renterId,
+        renterName,
+        renterAvatar,
+        renterRating,
+        ownerId: req.body.ownerId || targetTool.ownerId,
+        ownerName: req.body.ownerName || targetTool.owner?.name || 'Tool Owner',
         startDate,
         endDate,
         days,
@@ -836,20 +876,29 @@ app.post('/api/bookings', async (req, res) => {
   }
 
   const db = readDb();
-  if (!db.currentUser) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
-  const targetTool = db.listings.find(t => t.id === toolId);
+  let targetTool = db.listings.find(t => t.id === toolId);
   if (!targetTool) {
-    return res.status(404).json({ error: 'Tool not found' });
+    targetTool = {
+      id: toolId,
+      title: req.body.toolTitle || 'Equipment Rental',
+      image: req.body.toolImage || '/images/1.png',
+      category: req.body.toolCategory || 'General Equipment',
+      dailyRate: req.body.dailyRate || 2800,
+      ownerId: req.body.ownerId || (db.currentUser ? db.currentUser.id : 'user-alex'),
+      owner: { name: req.body.ownerName || 'Tool Owner' }
+    };
   }
 
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffTime = Math.abs(end.getTime() - start.getTime());
-  const days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-  const totalEstimate = days * targetTool.dailyRate;
+  const days = req.body.days || Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+  const totalEstimate = req.body.totalEstimate || (days * (targetTool.dailyRate || 2800));
+
+  const renterId = req.body.renterId || (db.currentUser ? db.currentUser.id : 'user-alex');
+  const renterName = req.body.renterName || (db.currentUser ? db.currentUser.name : 'Ayush');
+  const renterAvatar = req.body.renterAvatar || (db.currentUser ? db.currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
+  const renterRating = req.body.renterRating || 5.0;
 
   const newBooking = {
     id: `book-${Date.now()}`,
@@ -857,12 +906,12 @@ app.post('/api/bookings', async (req, res) => {
     toolTitle: targetTool.title,
     toolImage: targetTool.image,
     toolCategory: targetTool.category,
-    renterId: db.currentUser.id,
-    renterName: db.currentUser.name,
-    renterAvatar: db.currentUser.avatar,
-    renterRating: db.currentUser.rating || 5.0,
-    ownerId: targetTool.ownerId,
-    ownerName: targetTool.owner?.name || 'Tool Owner',
+    renterId,
+    renterName,
+    renterAvatar,
+    renterRating,
+    ownerId: req.body.ownerId || targetTool.ownerId,
+    ownerName: req.body.ownerName || targetTool.owner?.name || 'Tool Owner',
     startDate,
     endDate,
     days,
@@ -902,6 +951,6 @@ app.put('/api/bookings/:id', async (req, res) => {
   res.json(db.bookings[index]);
 });
 
-app.listen(PORT, () => {
-  console.log(`Assetex Backend server running on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Assetex Backend server running on port ${PORT} across all interfaces (0.0.0.0)`);
 });

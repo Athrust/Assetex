@@ -121,7 +121,7 @@ const MainContent: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-navy-800">
           <div className="space-y-4 md:col-span-1">
             <div className="flex items-center gap-3">
-              <img src="/icon.png" alt="Assetex Logo" className="h-10 w-auto object-contain" />
+              <img src="/logo.png" alt="Assetex Logo" className="h-14 w-auto object-contain drop-shadow-md" />
               <span className="text-2xl font-extrabold text-white tracking-tight">Assetex</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
