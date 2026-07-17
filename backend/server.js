@@ -562,12 +562,15 @@ app.post('/api/upload', (req, res) => {
       return res.status(400).json({ error: 'Invalid base64 data URL' });
     }
     const ext = matches[1].split('/')[1] || 'png';
-    const buffer = Buffer.from(matches[2], 'base64');
     const safeName = `img-${Date.now()}-${Math.round(Math.random() * 1E9)}.${ext}`;
-    const filePath = path.join(uploadsDir, safeName);
-    fs.writeFileSync(filePath, buffer);
-    const imageUrl = `http://localhost:${PORT}/api/uploads/${safeName}`;
-    return res.status(201).json({ url: imageUrl, success: true });
+    try {
+      if (!process.env.NETLIFY && !process.env.LAMBDA_TASK_ROOT) {
+        const buffer = Buffer.from(matches[2], 'base64');
+        const filePath = path.join(uploadsDir, safeName);
+        fs.writeFileSync(filePath, buffer);
+      }
+    } catch (e) { /* ignore filesystem write error in serverless */ }
+    return res.status(201).json({ url: dataUrl, success: true });
   } catch (err) {
     console.error('Image upload error:', err);
     return res.status(500).json({ error: 'Failed to upload image' });
