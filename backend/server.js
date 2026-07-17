@@ -32,6 +32,44 @@ app.use('/api/uploads', express.static(uploadsDir));
 app.use('/uploads', express.static(uploadsDir));
 
 let useMongoDB = false;
+let cachedDb = null;
+
+async function ensureMongoConnection() {
+  if (cachedDb && mongoose.connection.readyState === 1) {
+    useMongoDB = true;
+    return cachedDb;
+  }
+  const uri = process.env.MONGODB_URI;
+  if (!uri || uri.includes('127.0.0.1')) {
+    useMongoDB = false;
+    return null;
+  }
+  try {
+    cachedDb = await mongoose.connect(uri, { 
+      serverSelectionTimeoutMS: 8000,
+      bufferCommands: false
+    });
+    useMongoDB = true;
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      for (const key of Object.keys(initialOwners)) {
+        await User.create(initialOwners[key]);
+      }
+    }
+    return cachedDb;
+  } catch (err) {
+    console.warn(`[WARNING] MongoDB not reachable (${err.message}).`);
+    useMongoDB = false;
+    return null;
+  }
+}
+
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/.netlify/functions/api')) {
+    await ensureMongoConnection();
+  }
+  next();
+});
 
 // Initial seed data for fallback OR seeding MongoDB
 const initialOwners = {
@@ -478,28 +516,8 @@ const initialBookings = [
   }
 ];
 
-// Connect to MongoDB with graceful fallback
-mongoose.connect(MONGODB_URI, { serverSelectionTimeoutMS: 10000 })
-  .then(async () => {
-    useMongoDB = true;
-    console.log(`Connected to MongoDB successfully at ${MONGODB_URI.split('@')[1] || MONGODB_URI}`);
-    // Check and seed users only if none exist, leave listings clean
-    const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      console.log('Seeding initial Users/Owners into MongoDB...');
-      for (const key of Object.keys(initialOwners)) {
-        await User.create(initialOwners[key]);
-      }
-      console.log('Users seeded.');
-    }
-    const listingCount = await Listing.countDocuments();
-    console.log(`MongoDB currently has ${listingCount} active listings.`);
-  })
-  .catch(err => {
-    console.warn(`[WARNING] MongoDB not reachable (${err.message}).`);
-    console.warn('Seamlessly falling back to local db.json storage layer.');
-    useMongoDB = false;
-  });
+// Initial trigger for standalone server runs
+ensureMongoConnection().catch(() => {});
 
 // Helper functions for reading and writing local state (fallback when MongoDB is down)
 function readDb() {

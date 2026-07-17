@@ -127,7 +127,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ]);
         if (listingsRes.ok) {
           const listingsData = await listingsRes.json();
-          if (Array.isArray(listingsData) && listingsData.length > 0) {
+          if (Array.isArray(listingsData)) {
             setListings(listingsData);
           }
         }
