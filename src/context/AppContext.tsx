@@ -106,15 +106,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Save listings & bookings to localStorage whenever they change
   useEffect(() => {
-    if (listings.length > 0) {
-      localStorage.setItem('assetex_listings', JSON.stringify(listings));
-    }
+    localStorage.setItem('assetex_listings', JSON.stringify(listings));
   }, [listings]);
 
   useEffect(() => {
-    if (bookings.length > 0) {
-      localStorage.setItem('assetex_bookings', JSON.stringify(bookings));
-    }
+    localStorage.setItem('assetex_bookings', JSON.stringify(bookings));
   }, [bookings]);
 
   // Fetch data on mount
