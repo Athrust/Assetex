@@ -12,7 +12,11 @@ import {
   Info,
   Check,
   Award,
-  Building
+  Building,
+  Trash2,
+  XCircle,
+  UserCheck,
+  Settings
 } from 'lucide-react';
 
 interface ToolDetailProps {
@@ -21,8 +25,10 @@ interface ToolDetailProps {
 }
 
 export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) => {
-  const { listings, user, requestBooking } = useApp();
+  const { listings, user, bookings, requestBooking, deleteListing, updateBookingStatus } = useApp();
   const tool = listings.find(t => t.id === toolId);
+  const isOwner = Boolean(user && (user.id === tool?.ownerId || user.id === tool?.owner?.id));
+  const toolBookings = bookings.filter(b => b.toolId === toolId);
 
   // Default dates for immediate prototype convenience
   const today = new Date();
@@ -303,159 +309,290 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
           </div>
         </div>
 
-        {/* Right Column: Sticky Booking Request Box */}
+        {/* Right Column: Sticky Booking / Owner Management Box */}
         <div className="lg:col-span-5 sticky top-28">
-          <form onSubmit={handleSendRequest} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-elevated space-y-6">
-            <div className="flex items-baseline justify-between pb-4 border-b border-slate-100">
-              <div>
-                <span className="text-3xl font-black text-slate-900">₹{tool.dailyRate}</span>
-                <span className="text-sm text-slate-500 font-medium"> / day</span>
-              </div>
-              {tool.deposit && (
-                <span className="text-xs text-slate-600 font-semibold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
-                  +₹{tool.deposit} refundable deposit
-                </span>
-              )}
-            </div>
-
-            {/* Date Range Selection */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-blue-600" />
-                Select Rental Dates
-              </label>
-
-              {/* Quick Duration Buttons */}
-              <div className="grid grid-cols-4 gap-1.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => handleQuickDuration(1)}
-                  className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                    days === 1 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  1 Day
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDuration(2)}
-                  className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                    days === 2 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  2 Days
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDuration(3)}
-                  className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                    days === 3 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  3 Days (Weekend)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleQuickDuration(7)}
-                  className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                    days === 7 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  1 Week
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2">
+          {isOwner ? (
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border-2 border-brand-500/30 shadow-elevated space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                 <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-1">Start Date</span>
-                  <input 
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
-                  />
+                  <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-brand-50 text-brand-700 uppercase tracking-wider border border-brand-200">
+                    👑 Owner Controls
+                  </span>
+                  <h2 className="text-xl font-black text-navy-900 mt-2">You Listed This Equipment</h2>
                 </div>
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-500 block mb-1">End Date</span>
-                  <input 
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
-                  />
+                <div className="text-right">
+                  <span className="text-2xl font-black text-navy-900">₹{tool.dailyRate}</span>
+                  <span className="text-xs text-slate-400 block font-semibold">/ day</span>
                 </div>
               </div>
-            </div>
 
-            {/* Note to owner */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-navy-900 uppercase tracking-wider flex items-center gap-1.5">
-                <MessageSquare className="w-4 h-4 text-brand-600" />
-                Message to Owner (Optional)
-              </label>
-              <textarea 
-                rows={3}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Briefly introduce yourself and describe your project..."
-                className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-brand-500 focus:outline-none transition-all resize-none"
-              ></textarea>
-            </div>
+              {/* Rental Applications List */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-brand-600" />
+                    Rental Applications ({toolBookings.length})
+                  </h3>
+                </div>
 
-            {/* Estimated Total Breakdown */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5 text-sm">
-              <div className="flex justify-between text-slate-600">
-                <span>₹{tool.dailyRate} × {days} {days === 1 ? 'day' : 'days'}</span>
-                <span className="font-semibold">₹{totalEstimate}</span>
+                {toolBookings.length === 0 ? (
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-slate-100 text-center space-y-2">
+                    <Clock className="w-6 h-6 text-slate-400 mx-auto" />
+                    <p className="text-xs font-semibold text-slate-700">No active rental requests yet.</p>
+                    <p className="text-[11px] text-slate-500">When renters request dates for your equipment, you will be able to Accept or Decline right here.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3.5 max-h-[380px] overflow-y-auto pr-1">
+                    {toolBookings.map((booking) => (
+                      <div key={booking.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <img src={booking.renterAvatar} alt={booking.renterName} className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow-sm" />
+                            <div>
+                              <p className="text-xs font-extrabold text-navy-900">{booking.renterName}</p>
+                              <p className="text-[10px] font-semibold text-slate-500 flex items-center gap-1">
+                                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                {booking.renterRating} Renter Rating
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-black text-emerald-700 block">₹{booking.totalEstimate}</span>
+                            <span className="text-[10px] text-slate-400 font-bold">{booking.days} {booking.days === 1 ? 'day' : 'days'}</span>
+                          </div>
+                        </div>
+
+                        <div className="bg-white p-2.5 rounded-xl border border-slate-100 text-xs text-slate-700 space-y-1">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500">
+                            <span>Requested Dates:</span>
+                            <span className="text-navy-900">{booking.startDate} to {booking.endDate}</span>
+                          </div>
+                          {booking.message && (
+                            <p className="text-[11px] text-slate-600 italic pt-1 border-t border-slate-100">
+                              "{booking.message}"
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Status Actions */}
+                        {booking.status === 'Pending' ? (
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              onClick={() => updateBookingStatus(booking.id, 'Approved')}
+                              type="button"
+                              className="flex-1 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Accept
+                            </button>
+                            <button
+                              onClick={() => updateBookingStatus(booking.id, 'Declined')}
+                              type="button"
+                              className="flex-1 py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                            >
+                              <XCircle className="w-3.5 h-3.5" /> Decline
+                            </button>
+                          </div>
+                        ) : (
+                          <div className={`p-2.5 rounded-xl text-center text-xs font-bold flex items-center justify-center gap-1.5 ${
+                            booking.status === 'Approved' ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-200 text-slate-700'
+                          }`}>
+                            {booking.status === 'Approved' ? <CheckCircle2 className="w-4 h-4 text-emerald-700" /> : <XCircle className="w-4 h-4 text-slate-600" />}
+                            <span>Status: {booking.status}</span>
+                            {booking.status === 'Approved' && (
+                              <button
+                                onClick={() => updateBookingStatus(booking.id, 'Declined')}
+                                type="button"
+                                className="ml-auto text-[10px] underline text-rose-700 hover:text-rose-800 font-semibold cursor-pointer"
+                              >
+                                Revoke
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="flex justify-between text-slate-600">
-                <span>Assetex Protection & Service Fee (10%)</span>
-                <span className="font-semibold">₹{Math.round(totalEstimate * 0.1)}</span>
-              </div>
-              <div className="flex justify-between font-extrabold text-base pt-2 border-t border-slate-200 text-navy-900">
-                <span>Estimated Total</span>
-                <span className="text-brand-700">₹{totalEstimate + Math.round(totalEstimate * 0.1)}</span>
-              </div>
-            </div>
 
-            {/* Usage Location Rule Callout */}
-            <div className={`rounded-2xl p-3.5 flex items-start gap-3 text-xs leading-relaxed border ${
-              tool.usageLocationType === 'on-site' 
-                ? 'bg-blue-50/90 border-blue-200 text-blue-900 shadow-sm' 
-                : 'bg-emerald-50/90 border-emerald-200 text-emerald-900 shadow-sm'
-            }`}>
-              <Building className="w-4 h-4 shrink-0 mt-0.5 text-current" />
-              <div>
-                <strong className="font-bold block">Usage Rules</strong>
-                {tool.usageLocationType === 'on-site' 
-                  ? "This tool must be used inside the lender's workspace. Cannot be taken off-site."
-                  : "Can be taken away to the renter's home, office, or workplace."
-                }
-              </div>
-            </div>
-
-            {/* Important Notice Callout */}
-            <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-amber-900 leading-relaxed">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <strong className="font-bold block">No payment is collected now</strong>
-                You'll only pay once <strong>{tool.owner?.name || 'the owner'}</strong> reviews and approves your request dates.
+              {/* Danger Zone / Delete Listing */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <h3 className="text-sm font-bold text-navy-900 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-slate-500" />
+                  Listing Management
+                </h3>
+                <div className="bg-rose-50/70 border border-rose-200/80 rounded-2xl p-4 space-y-3">
+                  <p className="text-xs text-rose-900 leading-relaxed">
+                    Want to stop renting out this item or remove it completely from Assetex? Deleting cannot be undone.
+                  </p>
+                  <button
+                    onClick={async () => {
+                      if (window.confirm(`Are you sure you want to permanently delete "${tool.title}"?`)) {
+                        await deleteListing(tool.id);
+                        onNavigate('my-listings');
+                      }
+                    }}
+                    type="button"
+                    className="w-full py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" /> Delete This Listing
+                  </button>
+                </div>
               </div>
             </div>
+          ) : (
+            <form onSubmit={handleSendRequest} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-elevated space-y-6">
+              <div className="flex items-baseline justify-between pb-4 border-b border-slate-100">
+                <div>
+                  <span className="text-3xl font-black text-slate-900">₹{tool.dailyRate}</span>
+                  <span className="text-sm text-slate-500 font-medium"> / day</span>
+                </div>
+                {tool.deposit && (
+                  <span className="text-xs text-slate-600 font-semibold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
+                    +₹{tool.deposit} refundable deposit
+                  </span>
+                )}
+              </div>
 
-            <button
-              type="submit"
-              className="btn-primary w-full py-4 text-base bg-slate-800 hover:bg-slate-900 text-white shadow-sm border border-slate-700 font-bold tracking-wide"
-            >
-              Request to Rent →
-            </button>
+              {/* Date Range Selection */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                  Select Rental Dates
+                </label>
 
-            <div className="text-center space-y-1">
-              <p className="text-[11px] text-slate-400 font-semibold text-center">
-                Covered by Assetex Peace of Mind Guarantee
-              </p>
-            </div>
-          </form>
+                {/* Quick Duration Buttons */}
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDuration(1)}
+                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                      days === 1 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    1 Day
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDuration(2)}
+                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                      days === 2 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    2 Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDuration(3)}
+                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                      days === 3 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    3 Days (Weekend)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleQuickDuration(7)}
+                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                      days === 7 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    1 Week
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-1">Start Date</span>
+                    <input 
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-500 block mb-1">End Date</span>
+                    <input 
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Note to owner */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-navy-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4 text-brand-600" />
+                  Message to Owner (Optional)
+                </label>
+                <textarea 
+                  rows={3}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Briefly introduce yourself and describe your project..."
+                  className="w-full p-3 rounded-2xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-brand-500 focus:outline-none transition-all resize-none"
+                ></textarea>
+              </div>
+
+              {/* Estimated Total Breakdown */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5 text-sm">
+                <div className="flex justify-between text-slate-600">
+                  <span>₹{tool.dailyRate} × {days} {days === 1 ? 'day' : 'days'}</span>
+                  <span className="font-semibold">₹{totalEstimate}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Assetex Protection & Service Fee (10%)</span>
+                  <span className="font-semibold">₹{Math.round(totalEstimate * 0.1)}</span>
+                </div>
+                <div className="flex justify-between font-extrabold text-base pt-2 border-t border-slate-200 text-navy-900">
+                  <span>Estimated Total</span>
+                  <span className="text-brand-700">₹{totalEstimate + Math.round(totalEstimate * 0.1)}</span>
+                </div>
+              </div>
+
+              {/* Usage Location Rule Callout */}
+              <div className={`rounded-2xl p-3.5 flex items-start gap-3 text-xs leading-relaxed border ${
+                tool.usageLocationType === 'on-site' 
+                  ? 'bg-blue-50/90 border-blue-200 text-blue-900 shadow-sm' 
+                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-900 shadow-sm'
+              }`}>
+                <Building className="w-4 h-4 shrink-0 mt-0.5 text-current" />
+                <div>
+                  <strong className="font-bold block">Usage Rules</strong>
+                  {tool.usageLocationType === 'on-site' 
+                    ? "This tool must be used inside the lender's workspace. Cannot be taken off-site."
+                    : "Can be taken away to the renter's home, office, or workplace."
+                  }
+                </div>
+              </div>
+
+              {/* Important Notice Callout */}
+              <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-amber-900 leading-relaxed">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="font-bold block">No payment is collected now</strong>
+                  You'll only pay once <strong>{tool.owner?.name || 'the owner'}</strong> reviews and approves your request dates.
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary w-full py-4 text-base bg-slate-800 hover:bg-slate-900 text-white shadow-sm border border-slate-700 font-bold tracking-wide"
+              >
+                Request to Rent →
+              </button>
+
+              <div className="text-center space-y-1">
+                <p className="text-[11px] text-slate-400 font-semibold text-center">
+                  Covered by Assetex Peace of Mind Guarantee
+                </p>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
