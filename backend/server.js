@@ -566,27 +566,6 @@ function writeDb(data) {
 
 // REST Routes
 
-// Temporary diagnostic endpoint (remove after debugging)
-app.get('/api/debug-connection', async (req, res) => {
-  const uri = process.env.MONGODB_URI;
-  let connectError = null;
-  try {
-    await ensureMongoConnection();
-  } catch (e) {
-    connectError = e.message;
-  }
-  res.json({
-    useMongoDB,
-    mongooseState: mongoose.connection.readyState,
-    hasUri: !!uri,
-    uriPrefix: uri ? uri.substring(0, 30) + '...' : 'NOT SET',
-    connectError,
-    reqPath: req.path,
-    reqUrl: req.url,
-    envKeys: Object.keys(process.env).filter(k => k.includes('MONGO') || k === 'NETLIFY' || k === 'LAMBDA_TASK_ROOT')
-  });
-});
-
 // Image Upload Endpoint
 app.post('/api/upload', (req, res) => {
   try {
