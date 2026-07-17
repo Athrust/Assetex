@@ -26,3 +26,11 @@ dist-ssr
 # Local bin
 bin/
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Local database files
+*.sqlite
+*.sqlite3
