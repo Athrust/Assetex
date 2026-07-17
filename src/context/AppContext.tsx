@@ -10,7 +10,12 @@ import type {
 
 
 const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-const API_URL = `http://${hostname}:5001/api`;
+const isCloudDeploy = typeof window !== 'undefined' && (
+  window.location.hostname.includes('netlify.app') || 
+  window.location.hostname.includes('vercel.app') || 
+  window.location.protocol === 'https:'
+);
+const API_URL = isCloudDeploy ? '/api' : `http://${hostname}:5001/api`;
 
 interface AppContextType {
   user: UserAccount | null;
