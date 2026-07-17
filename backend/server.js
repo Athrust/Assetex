@@ -10,8 +10,12 @@ import User from './models/User.js';
 import Listing from './models/Listing.js';
 import Booking from './models/Booking.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = (typeof import.meta !== 'undefined' && import.meta.url) 
+  ? fileURLToPath(import.meta.url) 
+  : (typeof __filename !== 'undefined' ? __filename : '');
+const __dirname = __filename 
+  ? path.dirname(__filename) 
+  : (typeof __dirname !== 'undefined' ? __dirname : process.cwd());
 dotenv.config({ path: path.join(__dirname, '.env') });
 const DB_FILE = path.join(__dirname, 'db.json');
 
