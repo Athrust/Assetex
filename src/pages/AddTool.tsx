@@ -59,7 +59,13 @@ const presetTemplates = [
   }
 ];
 
-const API_URL = 'http://localhost:5001/api';
+const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+const isCloudDeploy = (
+  hostname.includes('netlify.app') || 
+  hostname.includes('vercel.app') || 
+  window.location.protocol === 'https:'
+);
+const API_URL = isCloudDeploy ? '/api' : `http://${hostname}:5001/api`;
 
 export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) => {
   const { user, addListing } = useApp();

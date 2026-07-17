@@ -28,6 +28,16 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Rewrite Netlify serverless function paths to match Express routes
+app.use((req, res, next) => {
+  if (req.url.startsWith('/.netlify/functions/api')) {
+    req.url = req.url.replace('/.netlify/functions/api', '') || '/';
+    if (!req.url.startsWith('/')) req.url = '/' + req.url;
+    if (!req.url.startsWith('/api')) req.url = '/api' + req.url;
+  }
+  next();
+});
+
 const uploadsDir = path.join(__dirname, 'uploads');
 try {
   if (!fs.existsSync(uploadsDir)) {
