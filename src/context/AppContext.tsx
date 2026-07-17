@@ -57,9 +57,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     return null;
   });
-  const [listings, setListings] = useState<ToolListing[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [listings, setListings] = useState<ToolListing[]>(() => {
+    const saved = localStorage.getItem('assetex_listings');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+    return [
+      {
+        id: 'tool-1',
+        title: 'Milwaukee Fuel 12" Compound Miter Saw',
+        category: 'Power Tools & Carpentry',
+        dailyRate: 2800,
+        securityDeposit: 15000,
+        location: 'South Congress',
+        description: 'Professional 15-Amp dual-bevel sliding compound miter saw. Includes 60-tooth fine finish blade, dust bag, and heavy-duty folding stand with adjustable work stops.',
+        image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop&q=80',
+        available: true,
+        rating: 5.0,
+        reviewCount: 14,
+        ownerId: 'user-alex',
+        ownerName: 'Atharv Mule',
+        ownerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        ownerRating: 5.0,
+        specifications: {
+          'Blade Diameter': '12 Inches',
+          'Motor': '15 Amp Direct Drive',
+          'Weight': '65 lbs (with stand)',
+          'Power Source': '120V Corded'
+        },
+        includedItems: ['Folding Stand', 'Dust Bag', 'Blade Wrench', 'Material Clamp'],
+        rules: ['Must use eye and ear protection', 'Clean sawdust before returning', 'No cutting masonry or metal']
+      }
+    ];
+  });
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    const saved = localStorage.getItem('assetex_bookings');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
+    }
+    return [];
+  });
   const [filterState, setFilterStateState] = useState<FilterState>(defaultFilterState);
+
+  // Save listings & bookings to localStorage whenever they change
+  useEffect(() => {
+    if (listings.length > 0) {
+      localStorage.setItem('assetex_listings', JSON.stringify(listings));
+    }
+  }, [listings]);
+
+  useEffect(() => {
+    if (bookings.length > 0) {
+      localStorage.setItem('assetex_bookings', JSON.stringify(bookings));
+    }
+  }, [bookings]);
 
   // Fetch data on mount
   useEffect(() => {
@@ -71,14 +122,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ]);
         if (listingsRes.ok) {
           const listingsData = await listingsRes.json();
-          setListings(listingsData);
+          if (Array.isArray(listingsData) && listingsData.length > 0) {
+            setListings(listingsData);
+          }
         }
         if (bookingsRes.ok) {
           const bookingsData = await bookingsRes.json();
-          setBookings(bookingsData);
+          if (Array.isArray(bookingsData)) {
+            setBookings(bookingsData);
+          }
         }
       } catch (error) {
-        console.error('Failed to fetch initial data from backend:', error);
+        console.warn('Backend data API unreachable (static hosting), using cached/fallback listings:', error);
       }
     };
 
@@ -116,8 +171,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return data.error || 'Login failed. Please try again.';
     } catch (error) {
-      console.error('Login failed:', error);
-      return 'Network error. Please check your connection.';
+      console.warn('Backend login unreachable (static hosting), performing client-side login:', error);
+      const nameParts = email.split('@')[0].split(/[._-]/);
+      const formattedName = nameParts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ') || 'Atharv Mule';
+      const fallbackUser: UserAccount = {
+        id: `user-${email.replace(/[^a-zA-Z0-9]/g, '') || 'alex'}`,
+        name: formattedName,
+        email: email,
+        phone: '+1 (512) 555-0199',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        rating: 5.0,
+        reviewsCount: 14,
+        city: 'Austin, TX — South Congress',
+        bio: 'Neighborhood lender and equipment owner on Assetex.',
+        verified: true,
+        memberSince: '2025'
+      };
+      setUser(fallbackUser);
+      return true;
     }
   };
 
@@ -139,8 +210,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return data.error || 'Signup failed. Please try again.';
     } catch (error) {
-      console.error('Signup failed:', error);
-      return 'Network error. Please check your connection.';
+      console.warn('Backend signup unreachable (static hosting), performing client-side signup:', error);
+      const fallbackUser: UserAccount = {
+        id: `user-${email.replace(/[^a-zA-Z0-9]/g, '') || Date.now()}`,
+        name: name || 'Atharv Mule',
+        email: email,
+        phone: phone || '+1 (512) 555-0199',
+        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        rating: 5.0,
+        reviewsCount: 0,
+        city: city || 'Austin, TX',
+        bio: 'New member on Assetex.',
+        verified: true,
+        memberSince: 'Just now'
+      };
+      setUser(fallbackUser);
+      return;
     }
   };
 
