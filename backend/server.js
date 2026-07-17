@@ -18,7 +18,7 @@ const DB_FILE = path.join(__dirname, 'db.json');
 const app = express();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'assetex_secure_jwt_secret_key_2026';
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://atharvamule8055_db_user:Atharva8055@cluster69.e1o72ww.mongodb.net/assetex?appName=Cluster69';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/assetex';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
