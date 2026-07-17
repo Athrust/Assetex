@@ -67,33 +67,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { /* ignore */ }
     }
-    return [
-      {
-        id: 'tool-1',
-        title: 'Milwaukee Fuel 12" Compound Miter Saw',
-        category: 'Power Tools & Carpentry',
-        dailyRate: 2800,
-        securityDeposit: 15000,
-        location: 'South Congress',
-        description: 'Professional 15-Amp dual-bevel sliding compound miter saw. Includes 60-tooth fine finish blade, dust bag, and heavy-duty folding stand with adjustable work stops.',
-        image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&auto=format&fit=crop&q=80',
-        available: true,
-        rating: 5.0,
-        reviewCount: 14,
-        ownerId: 'user-alex',
-        ownerName: 'Atharv Mule',
-        ownerAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-        ownerRating: 5.0,
-        specifications: {
-          'Blade Diameter': '12 Inches',
-          'Motor': '15 Amp Direct Drive',
-          'Weight': '65 lbs (with stand)',
-          'Power Source': '120V Corded'
-        },
-        includedItems: ['Folding Stand', 'Dust Bag', 'Blade Wrench', 'Material Clamp'],
-        rules: ['Must use eye and ear protection', 'Clean sawdust before returning', 'No cutting masonry or metal']
-      }
-    ];
+    return [];
   });
   const [bookings, setBookings] = useState<Booking[]>(() => {
     const saved = localStorage.getItem('assetex_bookings');
