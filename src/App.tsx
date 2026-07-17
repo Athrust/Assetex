@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { AppProvider } from './context/AppContext';
+import React, { useState, useEffect, useCallback } from 'react';
+import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
 import { Browse } from './pages/Browse';
@@ -15,23 +15,59 @@ import { BookingRequests } from './pages/BookingRequests';
 import { Profile } from './pages/Profile';
 
 const MainContent: React.FC = () => {
-  const [activePage, setActivePage] = useState<string>('home');
-  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
+  const { user } = useApp();
+
+  // Restore page state from localStorage on mount
+  const [activePage, setActivePage] = useState<string>(() => {
+    const saved = localStorage.getItem('assetex_active_page');
+    return saved || 'home';
+  });
+  const [selectedToolId, setSelectedToolId] = useState<string | null>(() => {
+    return localStorage.getItem('assetex_selected_tool') || null;
+  });
+  // When a user is not logged in and clicks a tool, we remember it so we can redirect after login
+  const [pendingToolId, setPendingToolId] = useState<string | null>(null);
+
+  // Persist navigation state to localStorage
+  useEffect(() => {
+    localStorage.setItem('assetex_active_page', activePage);
+    if (selectedToolId) {
+      localStorage.setItem('assetex_selected_tool', selectedToolId);
+    } else {
+      localStorage.removeItem('assetex_selected_tool');
+    }
+  }, [activePage, selectedToolId]);
 
   // Scroll to top when page changes
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activePage, selectedToolId]);
 
-  const handleSelectTool = (toolId: string) => {
+  // After user logs in or signs up, redirect to the pending tool if any
+  useEffect(() => {
+    if (user && pendingToolId) {
+      setSelectedToolId(pendingToolId);
+      setActivePage('tool-detail');
+      setPendingToolId(null);
+    }
+  }, [user, pendingToolId]);
+
+  const handleSelectTool = useCallback((toolId: string) => {
+    if (!user) {
+      // Not logged in — remember the tool and redirect to login
+      setPendingToolId(toolId);
+      setSelectedToolId(null);
+      setActivePage('login');
+      return;
+    }
     setSelectedToolId(toolId);
     setActivePage('tool-detail');
-  };
+  }, [user]);
 
-  const handleNavigate = (page: string) => {
+  const handleNavigate = useCallback((page: string) => {
     setSelectedToolId(null);
     setActivePage(page);
-  };
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-slate-900">

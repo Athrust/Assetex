@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Wrench, User, Mail, Phone, Lock, MapPin, CheckCircle2 } from 'lucide-react';
+import { Wrench, User, Mail, Phone, Lock, MapPin, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface SignUpProps {
   onNavigate: (page: string) => void;
@@ -8,16 +8,48 @@ interface SignUpProps {
 
 export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
   const { signup } = useApp();
-  const [name, setName] = useState('Taylor Brooks');
-  const [email, setEmail] = useState('taylor.brooks@example.com');
-  const [phone, setPhone] = useState('+1 (512) 555-0188');
-  const [password, setPassword] = useState('••••••••••••');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [city, setCity] = useState('Austin, TX — South Congress');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    signup(name, email, phone, password, city);
-    onNavigate('dashboard');
+    setError('');
+
+    // Client-side validation
+    if (!name.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match. Please re-enter.');
+      return;
+    }
+
+    setLoading(true);
+    const result = await signup(name, email, phone, password, city);
+    setLoading(false);
+
+    if (result === undefined) {
+      // Success — navigate to dashboard
+      onNavigate('dashboard');
+    } else if (typeof result === 'string') {
+      setError(result);
+    }
   };
 
   return (
@@ -26,36 +58,45 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto shadow-sm mb-3">
           <Wrench className="w-7 h-7 -rotate-12" />
         </div>
-        <h1 className="text-3xl font-black text-slate-900">Create your unified account</h1>
+        <h1 className="text-3xl font-black text-slate-900">Create your account</h1>
         <p className="text-sm text-slate-600">
           One account lets you both borrow tools nearby and list your own to earn.
         </p>
       </div>
 
+      {error && (
+        <div className="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-2xl animate-in fade-in duration-200">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+          <p className="text-sm font-semibold text-rose-700">{error}</p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-200 border-b-2 border-b-slate-300 shadow-elevated space-y-4">
         <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">Full Name</label>
+          <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">Full Name <span className="text-rose-500">*</span></label>
           <div className="relative">
             <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
               type="text"
               required
+              placeholder="Your full name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => { setName(e.target.value); setError(''); }}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
             />
           </div>
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">Email Address</label>
+          <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">Email Address <span className="text-rose-500">*</span></label>
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
               type="email"
               required
+              placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(''); }}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
             />
           </div>
@@ -67,7 +108,7 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
               type="tel"
-              required
+              placeholder="+91 98765 43210"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
@@ -93,17 +134,52 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">Create Password</label>
+          <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">Create Password <span className="text-rose-500">*</span></label>
+          <div className="relative">
+            <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input 
+              type={showPassword ? 'text' : 'password'}
+              required
+              minLength={6}
+              placeholder="Minimum 6 characters"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
+              className="w-full pl-10 pr-12 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          {password.length > 0 && password.length < 6 && (
+            <p className="text-[11px] text-rose-500 font-semibold pl-1">Must be at least 6 characters</p>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">Confirm Password <span className="text-rose-500">*</span></label>
           <div className="relative">
             <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
               type="password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+              minLength={6}
+              placeholder="Re-enter your password"
+              value={confirmPassword}
+              onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
+              className={`w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border text-sm font-medium text-navy-900 focus:bg-white focus:outline-none ${
+                confirmPassword && confirmPassword !== password
+                  ? 'border-rose-300 focus:border-rose-500'
+                  : 'border-slate-200 focus:border-brand-500'
+              }`}
             />
           </div>
+          {confirmPassword && confirmPassword !== password && (
+            <p className="text-[11px] text-rose-500 font-semibold pl-1">Passwords do not match</p>
+          )}
         </div>
 
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-600 space-y-1">
@@ -116,9 +192,10 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
 
         <button
           type="submit"
-          className="btn-primary w-full py-3.5 text-base mt-2"
+          disabled={loading}
+          className="btn-primary w-full py-3.5 text-base mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Create Account & Start Sharing →
+          {loading ? 'Creating Account...' : 'Create Account & Start Sharing →'}
         </button>
 
         <div className="text-center pt-2 border-t border-slate-100">

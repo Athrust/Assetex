@@ -42,9 +42,9 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate, onSelectTool }) =>
 
   const userListings = listings.filter(l => l.ownerId === user.id);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({ name, email, phone, city, bio, avatar });
+    await updateUserProfile({ name, email, phone, city, bio, avatar });
     setIsEditing(false);
   };
 

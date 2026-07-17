@@ -21,7 +21,7 @@ interface ToolDetailProps {
 }
 
 export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) => {
-  const { listings, user, requestBooking, login } = useApp();
+  const { listings, user, requestBooking } = useApp();
   const tool = listings.find(t => t.id === toolId);
 
   // Default dates for immediate prototype convenience
@@ -60,13 +60,14 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
     setEndDate(e.toISOString().split('T')[0]);
   };
 
-  const handleSendRequest = (e: React.FormEvent) => {
+  const handleSendRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      // Prompt quick login as Alex
-      login('alex.rivera@assetex.io');
+      // Redirect to login page instead of auto-logging in
+      onNavigate('login');
+      return;
     }
-    requestBooking(tool.id, startDate, endDate, message);
+    await requestBooking(tool.id, startDate, endDate, message);
     setRequestSubmitted(true);
   };
 

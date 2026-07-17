@@ -119,7 +119,7 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
               {/* Actions Footer */}
               <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-2">
                 <button
-                  onClick={() => toggleListingStatus(tool.id)}
+                  onClick={async () => await toggleListingStatus(tool.id)}
                   className={`px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                     tool.status === 'active' 
                       ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' 
@@ -141,9 +141,9 @@ export const MyListings: React.FC<MyListingsProps> = ({ onNavigate, onSelectTool
                   </button>
 
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       if (window.confirm(`Are you sure you want to delete "${tool.title}"?`)) {
-                        deleteListing(tool.id);
+                        await deleteListing(tool.id);
                       }
                     }}
                     className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 text-xs font-semibold"

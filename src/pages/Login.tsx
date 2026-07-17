@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, AlertCircle } from 'lucide-react';
 
 interface LoginProps {
   onNavigate: (page: string) => void;
@@ -8,18 +8,26 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const { login } = useApp();
-  const [email, setEmail] = useState('alex.rivera@assetex.io');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, password);
-    onNavigate('dashboard');
-  };
-
-  const handleQuickDemoLogin = () => {
-    login('alex.rivera@assetex.io');
-    onNavigate('dashboard');
+    setError('');
+    if (!email || !password) {
+      setError('Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+    if (result === true) {
+      onNavigate('dashboard');
+    } else if (typeof result === 'string') {
+      setError(result);
+    }
   };
 
   return (
@@ -33,25 +41,16 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
         </div>
         <h1 className="text-3xl font-black text-slate-900">Welcome back to Assetex</h1>
         <p className="text-sm text-slate-600">
-          Log in to your unified account to manage rentals and listings.
+          Log in to your account to manage rentals and listings.
         </p>
       </div>
 
-      {/* Quick Demo Login Callout */}
-      <div className="bg-slate-50 border border-slate-200 border-b-2 border-b-slate-300 rounded-2xl p-5 space-y-3 text-left shadow-card">
-        <div className="text-slate-900 font-extrabold text-sm">
-          Prototype Demo Access
+      {error && (
+        <div className="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-2xl animate-in fade-in duration-200">
+          <AlertCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+          <p className="text-sm font-semibold text-rose-700">{error}</p>
         </div>
-        <p className="text-xs text-slate-600 leading-relaxed">
-          Want to test the full lifecycle right away? Log in as our pre-seeded user <strong>Alex Rivera</strong> to inspect active listings and approve incoming booking requests!
-        </p>
-        <button
-          onClick={handleQuickDemoLogin}
-          className="btn-primary w-full py-2.5 text-xs"
-        >
-          1-Click Demo Login (Alex Rivera) →
-        </button>
-      </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-200 border-b-2 border-b-slate-300 shadow-elevated space-y-5">
         <div className="space-y-1.5">
@@ -61,8 +60,9 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
             <input
               type="email"
               required
+              placeholder="you@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError(''); }}
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none transition-all shadow-sm"
             />
           </div>
@@ -75,8 +75,9 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
             <input
               type="password"
               required
+              placeholder="Enter your password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setError(''); }}
               className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none transition-all shadow-sm"
             />
           </div>
@@ -84,9 +85,10 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
 
         <button
           type="submit"
-          className="btn-primary w-full py-3.5 text-base bg-slate-800 hover:bg-slate-900 text-white font-bold shadow-sm border border-slate-700"
+          disabled={loading}
+          className="btn-primary w-full py-3.5 text-base bg-slate-800 hover:bg-slate-900 text-white font-bold shadow-sm border border-slate-700 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Log In
+          {loading ? 'Logging in...' : 'Log In'}
         </button>
 
         <div className="text-center pt-2 border-t border-slate-100">

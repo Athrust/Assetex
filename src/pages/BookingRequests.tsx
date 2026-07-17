@@ -189,14 +189,14 @@ export const BookingRequests: React.FC<BookingRequestsProps> = ({ onNavigate, on
                 {req.status === 'Pending' ? (
                   <div className="space-y-2.5">
                     <button
-                      onClick={() => updateBookingStatus(req.id, 'Approved')}
+                      onClick={async () => await updateBookingStatus(req.id, 'Approved')}
                       className="btn-primary w-full py-3 bg-emerald-600 hover:bg-emerald-700 font-extrabold text-sm gap-2 shadow-md shadow-emerald-600/20"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       Approve Rental
                     </button>
                     <button
-                      onClick={() => updateBookingStatus(req.id, 'Declined')}
+                      onClick={async () => await updateBookingStatus(req.id, 'Declined')}
                       className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 hover:border-rose-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
                     >
                       <XCircle className="w-4 h-4" />
@@ -220,7 +220,7 @@ export const BookingRequests: React.FC<BookingRequestsProps> = ({ onNavigate, on
                     <div className="flex gap-2 pt-1">
                       {req.status === 'Approved' && (
                         <button
-                          onClick={() => updateBookingStatus(req.id, 'Declined')}
+                          onClick={async () => await updateBookingStatus(req.id, 'Declined')}
                           className="text-[11px] text-rose-600 hover:underline mx-auto block font-semibold"
                         >
                           Change to Declined
@@ -228,7 +228,7 @@ export const BookingRequests: React.FC<BookingRequestsProps> = ({ onNavigate, on
                       )}
                       {req.status === 'Declined' && (
                         <button
-                          onClick={() => updateBookingStatus(req.id, 'Approved')}
+                          onClick={async () => await updateBookingStatus(req.id, 'Approved')}
                           className="text-[11px] text-emerald-600 hover:underline mx-auto block font-semibold"
                         >
                           Change to Approved

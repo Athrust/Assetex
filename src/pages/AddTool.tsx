@@ -114,12 +114,12 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
     setSpecs(specs.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (images.length === 0) return;
     if (!title || !shortDescription) return;
 
-    const newId = addListing({
+    const newId = await addListing({
       title,
       category,
       shortDescription,
