@@ -569,14 +569,21 @@ function writeDb(data) {
 // Temporary diagnostic endpoint (remove after debugging)
 app.get('/api/debug-connection', async (req, res) => {
   const uri = process.env.MONGODB_URI;
-  const mongooseState = mongoose.connection.readyState;
+  let connectError = null;
+  try {
+    await ensureMongoConnection();
+  } catch (e) {
+    connectError = e.message;
+  }
   res.json({
     useMongoDB,
-    mongooseState,
+    mongooseState: mongoose.connection.readyState,
     hasUri: !!uri,
     uriPrefix: uri ? uri.substring(0, 30) + '...' : 'NOT SET',
-    envKeys: Object.keys(process.env).filter(k => k.includes('MONGO') || k === 'NETLIFY' || k === 'LAMBDA_TASK_ROOT'),
-    nodeEnv: process.env.NODE_ENV
+    connectError,
+    reqPath: req.path,
+    reqUrl: req.url,
+    envKeys: Object.keys(process.env).filter(k => k.includes('MONGO') || k === 'NETLIFY' || k === 'LAMBDA_TASK_ROOT')
   });
 });
 
