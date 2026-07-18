@@ -120,10 +120,14 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigate, onSelectTool }) =>
                 onChange={(e) => setCity(e.target.value)} 
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium"
               >
-                <option value="Austin, TX — South Congress">Austin, TX — South Congress</option>
-                <option value="Austin, TX — Eastside">Austin, TX — Eastside</option>
-                <option value="Austin, TX — North Loop">Austin, TX — North Loop</option>
-                <option value="Austin, TX — Hyde Park">Austin, TX — Hyde Park</option>
+                <option value="Mumbai">Mumbai</option>
+                <option value="Pune">Pune</option>
+                <option value="Nagpur">Nagpur</option>
+                <option value="Nashik">Nashik</option>
+                <option value="Aurangabad">Aurangabad</option>
+                <option value="Solapur">Solapur</option>
+                <option value="Amravati">Amravati</option>
+                <option value="Kolhapur">Kolhapur</option>
               </select>
             </div>
           </div>

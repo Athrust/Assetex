@@ -67,8 +67,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
       searchQuery: '',
       category: 'All Categories',
       sortBy: 'rating',
-      maxPrice: 6000,
-      location: 'All Austin'
+      maxPrice: Infinity,
+      locations: []
     });
     setActivePage('browse');
     setUserDropdownOpen(false);

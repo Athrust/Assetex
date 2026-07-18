@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   phone: { type: String, default: '+1 (512) 555-0100' },
-  avatar: { type: String, default: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' },
+  avatar: { type: String, default: 'https://ui-avatars.com/api/?name=User&background=random' },
   city: { type: String, default: 'Austin, TX — South Congress' },
   bio: { type: String, default: 'Enthusiastic DIYer and maker exploring the Assetex community.' },
   rating: { type: Number, default: 5.0 },

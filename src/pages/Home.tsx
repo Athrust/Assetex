@@ -56,8 +56,8 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               searchQuery: '',
               category: 'All Categories',
               sortBy: 'rating',
-              maxPrice: 6000,
-              location: 'All Austin'
+              maxPrice: Infinity,
+              locations: []
             });
             onNavigate('browse');
           }} />
@@ -166,10 +166,14 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                         className="w-full pl-10 pr-4 py-3.5 rounded-md bg-slate-50 border border-slate-200 text-sm font-semibold text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none cursor-pointer transition-all shadow-sm"
                       >
                         <option value="All Neighborhoods">All Neighborhoods</option>
-                        <option value="South Congress">Austin, TX — South Congress</option>
-                        <option value="Eastside">Austin, TX — Eastside</option>
-                        <option value="North Loop">Austin, TX — North Loop</option>
-                        <option value="Hyde Park">Austin, TX — Hyde Park</option>
+                        <option value="Mumbai">Mumbai</option>
+                        <option value="Pune">Pune</option>
+                        <option value="Nagpur">Nagpur</option>
+                        <option value="Nashik">Nashik</option>
+                        <option value="Aurangabad">Aurangabad</option>
+                        <option value="Solapur">Solapur</option>
+                        <option value="Amravati">Amravati</option>
+                        <option value="Kolhapur">Kolhapur</option>
                       </select>
                     </div>
                   </div>
@@ -260,7 +264,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 Pick Up & Create
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed">
-                Once confirmed, coordinate a quick neighborhood pickup. Complete your DIY project or prototype, then return the equipment cleanly on the agreed date.
+                Once confirmed, coordinate a quick neighborhood pickup. Complete your DIY project, then return the equipment cleanly on the agreed date.
               </p>
             </div>
           </div>

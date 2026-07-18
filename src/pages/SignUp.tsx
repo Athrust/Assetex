@@ -8,7 +8,8 @@ interface SignUpProps {
 
 export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
   const { signup } = useApp();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -23,8 +24,8 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
     setError('');
 
     // Client-side validation
-    if (!name.trim()) {
-      setError('Please enter your full name.');
+    if (!firstName.trim()) {
+      setError('Please enter your first name.');
       return;
     }
     if (!email.trim()) {
@@ -41,7 +42,8 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
     }
 
     setLoading(true);
-    const result = await signup(name, email, phone, password, city);
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+    const result = await signup(fullName, email, phone, password, city);
     setLoading(false);
 
     if (result === undefined) {
@@ -75,18 +77,33 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-200 border-b-2 border-b-slate-300 shadow-elevated space-y-4">
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">Full Name <span className="text-rose-500">*</span></label>
-          <div className="relative">
-            <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input 
-              type="text"
-              required
-              placeholder="Your full name"
-              value={name}
-              onChange={(e) => { setName(e.target.value); setError(''); }}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
-            />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">First Name <span className="text-rose-500">*</span></label>
+            <div className="relative">
+              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input 
+                type="text"
+                required
+                placeholder="First name"
+                value={firstName}
+                onChange={(e) => { setFirstName(e.target.value); setError(''); }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">Last Name</label>
+            <div className="relative">
+              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input 
+                type="text"
+                placeholder="Last name"
+                value={lastName}
+                onChange={(e) => { setLastName(e.target.value); setError(''); }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none"
+              />
+            </div>
           </div>
         </div>
 
@@ -128,10 +145,14 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
               onChange={(e) => setCity(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-medium text-navy-900 focus:bg-white focus:border-brand-500 focus:outline-none cursor-pointer"
             >
-              <option value="Austin, TX — South Congress">Austin, TX — South Congress</option>
-              <option value="Austin, TX — Eastside">Austin, TX — Eastside</option>
-              <option value="Austin, TX — North Loop">Austin, TX — North Loop</option>
-              <option value="Austin, TX — Hyde Park">Austin, TX — Hyde Park</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Pune">Pune</option>
+              <option value="Nagpur">Nagpur</option>
+              <option value="Nashik">Nashik</option>
+              <option value="Aurangabad">Aurangabad</option>
+              <option value="Solapur">Solapur</option>
+              <option value="Amravati">Amravati</option>
+              <option value="Kolhapur">Kolhapur</option>
             </select>
           </div>
         </div>

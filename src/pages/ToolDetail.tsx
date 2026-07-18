@@ -36,13 +36,14 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
   );
   const toolBookings = bookings.filter(b => b.toolId === toolId);
 
-  // Default dates for immediate prototype convenience
   const today = new Date();
   const startDefault = new Date(today.getTime() + 86400000 * 2).toISOString().split('T')[0];
   const endDefault = new Date(today.getTime() + 86400000 * 4).toISOString().split('T')[0];
 
   const [startDate, setStartDate] = useState(startDefault);
   const [endDate, setEndDate] = useState(endDefault);
+  const [rentalType, setRentalType] = useState<'daily' | 'hourly'>('daily');
+  const [hours, setHours] = useState(4);
   const [message, setMessage] = useState('Hi! I have a weekend DIY project and would love to rent your equipment. I can pick up at your convenience.');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
@@ -64,7 +65,13 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
   const end = new Date(endDate);
   const diffTime = end.getTime() - start.getTime();
   const days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-  const totalEstimate = days * tool.dailyRate;
+  
+  let totalEstimate = 0;
+  if (rentalType === 'hourly' && tool.hourlyRate) {
+    totalEstimate = hours * tool.hourlyRate;
+  } else {
+    totalEstimate = days * tool.dailyRate;
+  }
 
   const handleQuickDuration = (numDays: number) => {
     const s = new Date(startDate);
@@ -79,7 +86,7 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
       onNavigate('login');
       return;
     }
-    await requestBooking(tool.id, startDate, endDate, message);
+    await requestBooking(tool.id, startDate, endDate, message, rentalType, hours);
     setRequestSubmitted(true);
   };
 
@@ -450,8 +457,8 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
             <form onSubmit={handleSendRequest} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-elevated space-y-6">
               <div className="flex items-baseline justify-between pb-4 border-b border-slate-100">
                 <div>
-                  <span className="text-3xl font-black text-slate-900">₹{tool.dailyRate}</span>
-                  <span className="text-sm text-slate-500 font-medium"> / day</span>
+                  <span className="text-3xl font-black text-slate-900">₹{rentalType === 'hourly' && tool.hourlyRate ? tool.hourlyRate : tool.dailyRate}</span>
+                  <span className="text-sm text-slate-500 font-medium"> / {rentalType === 'hourly' ? 'hour' : 'day'}</span>
                 </div>
                 {tool.deposit && (
                   <span className="text-xs text-slate-600 font-semibold bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
@@ -460,73 +467,123 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
                 )}
               </div>
 
+              {tool.hourlyRate && (
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setRentalType('daily')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${rentalType === 'daily' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Rent by Days
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRentalType('hourly')}
+                    className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${rentalType === 'hourly' ? 'bg-white shadow text-navy-900' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Rent by Hours
+                  </button>
+                </div>
+              )}
+
               {/* Date Range Selection */}
               <div className="space-y-3">
                 <label className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-blue-600" />
-                  Select Rental Dates
+                  {rentalType === 'hourly' ? 'Select Date & Duration' : 'Select Rental Dates'}
                 </label>
 
-                {/* Quick Duration Buttons */}
-                <div className="grid grid-cols-4 gap-1.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDuration(1)}
-                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                      days === 1 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    1 Day
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDuration(2)}
-                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                      days === 2 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    2 Days
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDuration(3)}
-                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                      days === 3 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    3 Days (Weekend)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDuration(7)}
-                    className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
-                      days === 7 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    1 Week
-                  </button>
-                </div>
+                {rentalType === 'daily' ? (
+                  <>
+                    <div className="grid grid-cols-4 gap-1.5 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDuration(1)}
+                        className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                          days === 1 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        1 Day
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDuration(2)}
+                        className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                          days === 2 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        2 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDuration(3)}
+                        className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                          days === 3 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        3 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDuration(7)}
+                        className={`py-1.5 text-xs font-semibold rounded-xl border transition-all ${
+                          days === 7 ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        1 Week
+                      </button>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-1">Start Date</span>
-                    <input 
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
-                    />
+                    <div className="grid grid-cols-2 gap-3 pt-2">
+                      <div>
+                        <span className="text-[11px] font-semibold text-slate-500 block mb-1">Start Date</span>
+                        <input 
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-semibold text-slate-500 block mb-1">End Date</span>
+                        <input 
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">Date</span>
+                      <input 
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => {
+                          setStartDate(e.target.value);
+                          setEndDate(e.target.value);
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[11px] font-semibold text-slate-500 block mb-1">Duration</span>
+                      <select 
+                        value={hours}
+                        onChange={(e) => setHours(Number(e.target.value))}
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
+                      >
+                        <option value={2}>2 Hours</option>
+                        <option value={4}>4 Hours</option>
+                        <option value={8}>8 Hours</option>
+                        <option value={12}>12 Hours</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-500 block mb-1">End Date</span>
-                    <input 
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-semibold text-navy-800 focus:bg-white focus:border-brand-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Note to owner */}
@@ -547,7 +604,7 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
               {/* Estimated Total Breakdown */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5 text-sm">
                 <div className="flex justify-between text-slate-600">
-                  <span>₹{tool.dailyRate} × {days} {days === 1 ? 'day' : 'days'}</span>
+                  <span>{rentalType === 'hourly' && tool.hourlyRate ? `₹${tool.hourlyRate} × ${hours} hours` : `₹${tool.dailyRate} × ${days} ${days === 1 ? 'day' : 'days'}`}</span>
                   <span className="font-semibold">₹{totalEstimate}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
@@ -561,20 +618,31 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
               </div>
 
               {/* Usage Location Rule Callout */}
-              <div className={`rounded-2xl p-3.5 flex items-start gap-3 text-xs leading-relaxed border ${
-                tool.usageLocationType === 'on-site' 
-                  ? 'bg-blue-50/90 border-blue-200 text-blue-900 shadow-sm' 
-                  : 'bg-emerald-50/90 border-emerald-200 text-emerald-900 shadow-sm'
-              }`}>
-                <Building className="w-4 h-4 shrink-0 mt-0.5 text-current" />
-                <div>
-                  <strong className="font-bold block">Usage Rules</strong>
-                  {tool.usageLocationType === 'on-site' 
-                    ? "This tool must be used inside the lender's workspace. Cannot be taken off-site."
-                    : "Can be taken away to the renter's home, office, or workplace."
-                  }
+              {tool.usageLocationType && tool.usageLocationType !== 'both' && (
+                <div className={`rounded-2xl p-3.5 flex items-start gap-3 text-xs leading-relaxed border ${
+                  tool.usageLocationType === 'on-site' 
+                    ? 'bg-blue-50/90 border-blue-200 text-blue-900 shadow-sm' 
+                    : 'bg-emerald-50/90 border-emerald-200 text-emerald-900 shadow-sm'
+                }`}>
+                  <Building className="w-4 h-4 shrink-0 mt-0.5 text-current" />
+                  <div>
+                    <strong className="font-bold block">Usage Rules</strong>
+                    {tool.usageLocationType === 'on-site' 
+                      ? "This tool must be used inside the lender's workspace. Cannot be taken off-site."
+                      : "Can be taken away to the renter's home, office, or workplace."
+                    }
+                  </div>
                 </div>
-              </div>
+              )}
+              {tool.usageLocationType === 'both' && (
+                <div className="bg-purple-50/90 border border-purple-200 text-purple-900 rounded-2xl p-3.5 flex items-start gap-3 text-xs leading-relaxed shadow-sm">
+                  <Building className="w-4 h-4 shrink-0 mt-0.5 text-current" />
+                  <div>
+                    <strong className="font-bold block">Usage Rules</strong>
+                    This tool can be used at the lender's workspace or taken off-site. Both work!
+                  </div>
+                </div>
+              )}
 
               {/* Important Notice Callout */}
               <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-3.5 flex items-start gap-3 text-xs text-amber-900 leading-relaxed">

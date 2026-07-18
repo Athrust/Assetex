@@ -1,18 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import type { 
-  ToolListing, 
-  Booking, 
-  UserAccount, 
-  FilterState, 
-  BookingStatus 
+import type {
+  ToolListing,
+  Booking,
+  UserAccount,
+  FilterState,
+  BookingStatus
 } from '../types';
 
 
 const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
 const isCloudDeploy = typeof window !== 'undefined' && (
-  window.location.hostname.includes('netlify.app') || 
-  window.location.hostname.includes('vercel.app') || 
+  window.location.hostname.includes('netlify.app') ||
+  window.location.hostname.includes('vercel.app') ||
   window.location.protocol === 'https:'
 );
 const API_URL = isCloudDeploy ? '/api' : `http://${hostname}:5001/api`;
@@ -22,7 +22,7 @@ interface AppContextType {
   listings: ToolListing[];
   bookings: Booking[];
   filterState: FilterState;
-  
+
   // Auth actions
   login: (email: string, password?: string) => Promise<boolean | string>;
   logout: () => void;
@@ -36,7 +36,7 @@ interface AppContextType {
   toggleListingStatus: (id: string) => Promise<void>;
 
   // Booking actions
-  requestBooking: (toolId: string, startDate: string, endDate: string, message: string) => Promise<Booking>;
+  requestBooking: (toolId: string, startDate: string, endDate: string, message: string, rentalType?: 'daily' | 'hourly', hours?: number) => Promise<Booking>;
   updateBookingStatus: (bookingId: string, status: BookingStatus) => Promise<void>;
 
   // Filter actions
@@ -47,9 +47,9 @@ interface AppContextType {
 const defaultFilterState: FilterState = {
   searchQuery: '',
   category: 'All Categories',
-  maxPrice: 6000,
+  maxPrice: Infinity,
   sortBy: 'rating',
-  location: 'All Austin',
+  locations: [],
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -157,7 +157,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         rating: 5.0,
         reviewsCount: 14,
-        city: 'Austin, TX — South Congress',
+        city: 'Mumbai',
         bio: 'Neighborhood lender and equipment owner on Assetex.',
         verified: true,
         memberSince: '2025'
@@ -194,7 +194,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         rating: 5.0,
         reviewsCount: 0,
-        city: city || 'Austin, TX',
+        city: city || 'Mumbai',
         bio: 'New member on Assetex.',
         verified: true,
         memberSince: 'Just now'
@@ -236,7 +236,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         responseRate: '100%',
         verified: user.verified !== undefined ? user.verified : true,
         memberSince: user.memberSince || 'Just now',
-        city: user.city || data.location || 'Austin, TX',
+        city: user.city || data.location || 'Mumbai',
         bio: user.bio || 'Neighborhood lender on Assetex.'
       }
     };
@@ -302,7 +302,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await updateListing(id, { status: newStatus });
   };
 
-  const requestBooking = async (toolId: string, startDate: string, endDate: string, message: string): Promise<Booking> => {
+  const requestBooking = async (toolId: string, startDate: string, endDate: string, message: string, rentalType: 'daily' | 'hourly' = 'daily', hours?: number): Promise<Booking> => {
     if (!user) throw new Error("User not logged in");
     const targetTool = listings.find(l => l.id === toolId);
     if (!targetTool) throw new Error("Tool not found");
@@ -311,7 +311,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const end = new Date(endDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     const days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-    const totalEstimate = days * targetTool.dailyRate;
+    
+    let totalEstimate = 0;
+    if (rentalType === 'hourly' && hours && targetTool.hourlyRate) {
+      totalEstimate = hours * targetTool.hourlyRate;
+    } else {
+      totalEstimate = days * targetTool.dailyRate;
+    }
 
     const payload = {
       toolId,
@@ -321,7 +327,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       startDate,
       endDate,
       message,
+      rentalType,
       days,
+      hours,
       dailyRate: targetTool.dailyRate,
       totalEstimate,
       renterId: user.id,

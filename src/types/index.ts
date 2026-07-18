@@ -3,7 +3,8 @@ export type ToolCategory =
   | 'Power Tools & Carpentry'
   | 'Gardening & Outdoor'
   | 'Home Improvement'
-  | 'Photography & Video';
+  | 'Photography & Video'
+  | 'Other';
 
 export interface Owner {
   id: string;
@@ -38,8 +39,9 @@ export interface ToolListing {
   image: string;
   images?: string[];
   dailyRate: number;
+  hourlyRate?: number;
   deposit?: number;
-  location: string; // e.g. "Austin, TX — South Congress"
+  location: string; // e.g. "Mumbai"
   ownerId: string;
   owner?: Owner;
   status: 'active' | 'inactive';
@@ -47,7 +49,7 @@ export interface ToolListing {
   reviewCount: number;
   reviews?: ToolReview[];
   featured?: boolean;
-  usageLocationType?: 'off-site' | 'on-site';
+  usageLocationType?: 'off-site' | 'on-site' | 'both';
 }
 
 export type BookingStatus = 'Pending' | 'Approved' | 'Declined' | 'Completed';
@@ -66,7 +68,9 @@ export interface Booking {
   ownerName: string;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
+  rentalType?: 'daily' | 'hourly';
   days: number;
+  hours?: number;
   dailyRate: number;
   totalEstimate: number;
   status: BookingStatus;
@@ -93,5 +97,5 @@ export interface FilterState {
   category: string;
   maxPrice: number;
   sortBy: 'featured' | 'price-asc' | 'price-desc' | 'rating' | 'distance';
-  location: string;
+  locations: string[];
 }

@@ -30,11 +30,14 @@ const AVAILABLE_CATEGORIES = [
 ];
 
 const AVAILABLE_LOCATIONS = [
-  'All Austin',
-  'Austin, TX — South Congress',
-  'Austin, TX — Eastside',
-  'Austin, TX — North Loop',
-  'Austin, TX — Hyde Park'
+  'Mumbai',
+  'Pune',
+  'Nagpur',
+  'Nashik',
+  'Aurangabad',
+  'Solapur',
+  'Amravati',
+  'Kolhapur'
 ];
 
 const SORT_OPTIONS: Array<{ id: FilterState['sortBy']; label: string }> = [
@@ -81,9 +84,9 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
         return false;
       }
 
-      // location match
-      if (filterState.location && filterState.location !== 'All Austin') {
-        if (tool.location !== filterState.location) return false;
+      // location match (multi-select)
+      if (filterState.locations && filterState.locations.length > 0) {
+        if (!filterState.locations.includes(tool.location)) return false;
       }
 
       return true;
@@ -105,8 +108,8 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filterState.category && filterState.category !== 'All Categories') count++;
-    if (filterState.location && filterState.location !== 'All Austin') count++;
-    if (filterState.maxPrice < 10000) count++;
+    if (filterState.locations && filterState.locations.length > 0) count++;
+    if (filterState.maxPrice !== Infinity) count++;
     if (filterState.sortBy !== 'rating') count++;
     return count;
   }, [filterState]);
@@ -235,7 +238,7 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
               <div className="flex items-center justify-between text-xs font-bold">
                 <span className="text-slate-500">Up to:</span>
                 <span className="text-sm font-extrabold text-navy-900 bg-amber-50 text-amber-700 px-2.5 py-1 rounded-lg border border-amber-200">
-                  ₹{filterState.maxPrice} / day
+                  {filterState.maxPrice === Infinity ? 'Max' : `₹${filterState.maxPrice} / day`}
                 </span>
               </div>
 
@@ -244,8 +247,11 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
                 min={500}
                 max={10000}
                 step={500}
-                value={filterState.maxPrice}
-                onChange={(e) => setFilterState({ maxPrice: Number(e.target.value) })}
+                value={filterState.maxPrice === Infinity ? 10000 : filterState.maxPrice}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setFilterState({ maxPrice: val >= 10000 ? Infinity : val });
+                }}
                 className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-600"
               />
 
@@ -275,19 +281,24 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
           {openSections.location && (
             <div className="mt-3 space-y-1">
               {AVAILABLE_LOCATIONS.map(loc => {
-                const isSelected = filterState.location === loc || (!filterState.location && loc === 'All Austin');
+                const isSelected = filterState.locations?.includes(loc);
                 return (
                   <button
                     key={loc}
                     type="button"
-                    onClick={() => setFilterState({ location: loc })}
+                    onClick={() => {
+                      const newLocations = isSelected
+                        ? (filterState.locations || []).filter(l => l !== loc)
+                        : [...(filterState.locations || []), loc];
+                      setFilterState({ locations: newLocations });
+                    }}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-all ${
                       isSelected
                         ? 'bg-blue-50 text-brand-700 font-bold border border-blue-200/80 shadow-2xs'
                         : 'text-slate-600 hover:bg-slate-50 font-medium hover:text-navy-900 border border-transparent'
                     }`}
                   >
-                    <span className="truncate pr-2">{loc.replace('Austin, TX — ', '')}</span>
+                    <span className="truncate pr-2">{loc}</span>
                     {isSelected && <Check className="w-3.5 h-3.5 text-brand-600 shrink-0" />}
                   </button>
                 );

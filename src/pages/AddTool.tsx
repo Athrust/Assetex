@@ -23,7 +23,8 @@ const categories: ToolCategory[] = [
   'Power Tools & Carpentry',
   'Gardening & Outdoor',
   'Home Improvement',
-  'Photography & Video'
+  'Photography & Video',
+  'Other'
 ];
 
 const presetTemplates = [
@@ -75,16 +76,18 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [dailyRate, setDailyRate] = useState<number>(2800);
+  const [hourlyRate, setHourlyRate] = useState<number | ''>('');
   const [deposit, setDeposit] = useState<number>(8000);
-  const [location, setLocation] = useState('Austin, TX — South Congress');
+  const [location, setLocation] = useState('Mumbai');
   
   // Dynamic images list state matching "UPLOAD UP TO 12 PHOTOS" requirement
-  const [images, setImages] = useState<string[]>(['/images/11.png']);
+  const [images, setImages] = useState<string[]>([]);
+  const [error, setError] = useState('');
   const [showPhotoPopup, setShowPhotoPopup] = useState(false);
   const [customPhotoUrl, setCustomPhotoUrl] = useState('');
   
   // Custom usage location rules option (Off-site vs On-site workspace usage)
-  const [usageLocationType, setUsageLocationType] = useState<'off-site' | 'on-site'>('off-site');
+  const [usageLocationType, setUsageLocationType] = useState<'off-site' | 'on-site' | 'both'>('both');
   
   const [specs, setSpecs] = useState<string[]>(['All original safety guards included', 'Inspected and cleaned prior to rental']);
   const [newSpecInput, setNewSpecInput] = useState('');
@@ -166,7 +169,11 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (images.length === 0) return;
+    if (images.length < 3) {
+      setError('Please upload at least 3 photos.');
+      return;
+    }
+    setError('');
     if (!title || !shortDescription) return;
 
     const newId = await addListing({
@@ -175,9 +182,10 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
       shortDescription,
       description: description || shortDescription,
       specs,
-      image: images[0] || '/images/11.png',
-      images: images.length > 0 ? images : ['/images/11.png'],
+      image: images[0],
+      images: images,
       dailyRate: Number(dailyRate),
+      hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
       deposit: deposit ? Number(deposit) : undefined,
       location,
       status: 'active',
@@ -211,32 +219,11 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
         </div>
       </div>
 
-      {/* Quick Preset Templates Bar */}
-      <div className="bg-brand-50 border border-brand-200 rounded-3xl p-6 space-y-3">
-        <div className="text-brand-800 font-extrabold text-sm">
-          Quick Prototype Testing: Use a Pre-Filled Listing Template
+      {error && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-sm font-bold">
+          {error}
         </div>
-        <p className="text-xs text-brand-700">
-          Testing the prototype flow? Click one of these popular equipment templates to auto-fill the form below instantly!
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-          {presetTemplates.map((preset, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => handleApplyPreset(preset)}
-              className="p-3 rounded-2xl bg-white border border-brand-200 hover:border-brand-500 text-left shadow-sm hover:shadow-md transition-all group"
-            >
-              <span className="text-xs font-bold text-navy-900 line-clamp-1 group-hover:text-brand-600">
-                {preset.title.split('(')[0]}
-              </span>
-              <span className="text-[11px] font-extrabold text-emerald-600 block mt-1">
-                ₹{preset.dailyRate} / day
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-10 border-4 border-slate-300 shadow-elevated space-y-8">
         {/* Basic Info Section */}
@@ -328,6 +315,23 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">
+                Hourly Rate (₹ / Hour)
+              </label>
+              <div className="relative">
+                <IndianRupee className="w-4 h-4 text-emerald-600 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
+                <input 
+                  type="number"
+                  min="50"
+                  max="5000"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full pl-10 pr-4 py-3.5 rounded-md bg-slate-50 border-2 border-slate-200 border-b-4 border-b-slate-300/90 text-sm font-extrabold text-navy-900 focus:bg-white focus:border-blue-600 focus:border-b-blue-700 focus:outline-none transition-all shadow-[0_4px_10px_-2px_rgba(15,23,42,0.12),inset_0_2px_4px_rgba(15,23,42,0.06)] focus:shadow-[0_8px_20px_-4px_rgba(37,99,235,0.25)]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">
                 Refundable Deposit (₹ Optional)
               </label>
               <div className="relative">
@@ -354,10 +358,14 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full pl-10 pr-4 py-3.5 rounded-md bg-slate-50 border-2 border-slate-200 border-b-4 border-b-slate-300/90 text-sm font-semibold text-navy-800 focus:bg-white focus:border-blue-600 focus:border-b-blue-700 focus:outline-none cursor-pointer transition-all shadow-[0_4px_10px_-2px_rgba(15,23,42,0.12),inset_0_2px_4px_rgba(15,23,42,0.06)] focus:shadow-[0_8px_20px_-4px_rgba(37,99,235,0.25)]"
                 >
-                  <option value="Austin, TX — South Congress">Austin, TX — South Congress</option>
-                  <option value="Austin, TX — Eastside">Austin, TX — Eastside</option>
-                  <option value="Austin, TX — North Loop">Austin, TX — North Loop</option>
-                  <option value="Austin, TX — Hyde Park">Austin, TX — Hyde Park</option>
+                  <option value="Mumbai">Mumbai</option>
+                  <option value="Pune">Pune</option>
+                  <option value="Nagpur">Nagpur</option>
+                  <option value="Nashik">Nashik</option>
+                  <option value="Aurangabad">Aurangabad</option>
+                  <option value="Solapur">Solapur</option>
+                  <option value="Amravati">Amravati</option>
+                  <option value="Kolhapur">Kolhapur</option>
                 </select>
               </div>
             </div>
@@ -370,11 +378,12 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
                 <Building className="w-4 h-4 text-brand-600 absolute left-3.5 top-1/2 -translate-y-1/2 z-10" />
                 <select
                   value={usageLocationType}
-                  onChange={(e) => setUsageLocationType(e.target.value as 'off-site' | 'on-site')}
+                  onChange={(e) => setUsageLocationType(e.target.value as 'off-site' | 'on-site' | 'both')}
                   className="w-full pl-10 pr-4 py-3.5 rounded-md bg-slate-50 border-2 border-slate-200 border-b-4 border-b-slate-300/90 text-sm font-semibold text-navy-800 focus:bg-white focus:border-blue-600 focus:border-b-blue-700 focus:outline-none cursor-pointer transition-all shadow-[0_4px_10px_-2px_rgba(15,23,42,0.12),inset_0_2px_4px_rgba(15,23,42,0.06)] focus:shadow-[0_8px_20px_-4px_rgba(37,99,235,0.25)]"
                 >
                   <option value="off-site">Take to home/workplace</option>
                   <option value="on-site">Use in Lender's workspace</option>
+                  <option value="both">Both works</option>
                 </select>
               </div>
             </div>

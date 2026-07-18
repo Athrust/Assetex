@@ -153,21 +153,6 @@ const MainContent: React.FC = () => {
             </ul>
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold uppercase tracking-wider text-white">Prototype Notice</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              This is a fully clickable functional prototype designed to demonstrate the complete booking request and approval lifecycle without requiring live payment checkout.
-            </p>
-            <button
-              onClick={() => {
-                handleNavigate('dashboard');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="px-3.5 py-2 rounded-xl bg-brand-600/30 hover:bg-brand-600/50 border border-brand-500/40 text-brand-300 text-xs font-bold transition-all"
-            >
-              Open Unified Dashboard
-            </button>
-          </div>
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">

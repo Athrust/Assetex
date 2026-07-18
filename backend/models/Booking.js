@@ -14,7 +14,9 @@ const bookingSchema = new mongoose.Schema({
   ownerName: { type: String, required: true },
   startDate: { type: String, required: true },
   endDate: { type: String, required: true },
+  rentalType: { type: String, enum: ['daily', 'hourly'], default: 'daily' },
   days: { type: Number, required: true },
+  hours: { type: Number },
   dailyRate: { type: Number, required: true },
   totalEstimate: { type: Number, required: true },
   status: { 

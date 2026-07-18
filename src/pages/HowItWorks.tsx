@@ -43,7 +43,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ onNavigate }) => {
             <span className="w-10 h-10 rounded-xl bg-brand-50 text-brand-700 font-extrabold text-base flex items-center justify-center">01</span>
             <h3 className="text-xl font-bold text-navy-900">Search & Check Availability</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Browse listings across Austin by category or price. Check real-time owner ratings, verification badges, and exact tool specifications before you request.
+              Browse listings across Maharashtra by category or price. Check real-time owner ratings, verification badges, and exact tool specifications before you request.
             </p>
           </div>
 
