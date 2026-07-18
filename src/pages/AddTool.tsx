@@ -27,38 +27,7 @@ const categories: ToolCategory[] = [
   'Other'
 ];
 
-const presetTemplates = [
-  {
-    title: 'Milwaukee M18 Fuel 10-inch Compound Miter Saw',
-    category: 'Power Tools & Carpentry' as ToolCategory,
-    shortDescription: 'Cordless brushless sliding compound miter saw with dual bevel and 400 cuts per charge.',
-    description: 'Ultra-portable cordless miter saw that delivers the power and capacity of a corded 10-inch saw. Perfect for framing decks, cutting stair stringers, or installing crown molding without dragging extension cords across the jobsite. Comes with 8.0Ah High Output battery.',
-    dailyRate: 3600,
-    deposit: 12000,
-    image: '/images/11.png',
-    specs: ['10-inch 60-Tooth Carbide Blade Included', 'Up to 5-3/4 in Vertical Capacity', 'M18 REDLITHIUM 8.0Ah Battery + Charger']
-  },
-  {
-    title: 'Anycubic Photon M3 Max Resin 3D Printer (13.6" 7K Monochrome)',
-    category: '3D Printing & Fabrication' as ToolCategory,
-    shortDescription: 'Massive resin 3D printer with 300 x 298 x 164 mm build volume and ultra-high precision 7K screen.',
-    description: 'Print huge tabletop dragon dioramas, cosplay helmets, or intricate engineering prototypes in a single run. Features auto resin filling and high-speed UV matrix lighting.',
-    dailyRate: 3200,
-    deposit: 16000,
-    image: '/images/12.png',
-    specs: ['Build Volume: 300 x 298 x 164 mm', '7K Monochrome LCD Resolution', 'Includes Wash & Cure Station Access']
-  },
-  {
-    title: 'EGO Power+ 56V Cordless 21-inch Self-Propelled Lawn Mower',
-    category: 'Gardening & Outdoor' as ToolCategory,
-    shortDescription: 'Peak power equivalent to a 7.0 ft-lb gas engine without the noise, exhaust fumes, or pull cords.',
-    description: 'Get your lawn looking golf-green crisp with zero emissions. Runs for 60 minutes on a single charge and folds upright for easy transport in an SUV or hatchback.',
-    dailyRate: 2800,
-    deposit: 8000,
-    image: '/images/13.png',
-    specs: ['56V 7.5Ah ARC Lithium Battery included', 'Rapid Charger (recharges in 60 mins)', '3-in-1 Mulching, Bagging, Side Discharge']
-  }
-];
+
 
 const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
 const isCloudDeploy = (
@@ -143,17 +112,7 @@ export const AddTool: React.FC<AddToolProps> = ({ onNavigate, onSelectTool }) =>
     );
   }
 
-  const handleApplyPreset = (preset: typeof presetTemplates[0]) => {
-    setTitle(preset.title);
-    setCategory(preset.category);
-    setShortDescription(preset.shortDescription);
-    setDescription(preset.description);
-    setDailyRate(preset.dailyRate);
-    setDeposit(preset.deposit);
-    setImages([preset.image]);
-    setSpecs(preset.specs);
-    setUsageLocationType('off-site');
-  };
+
 
   const handleAddSpec = (e: React.FormEvent) => {
     e.preventDefault();

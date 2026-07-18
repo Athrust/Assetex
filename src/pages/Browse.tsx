@@ -338,15 +338,17 @@ export const Browse: React.FC<BrowseProps> = ({ onSelectTool }) => {
               />
             </span>
           )}
-          {filterState.location && filterState.location !== 'All Austin' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
-              {filterState.location.replace('Austin, TX — ', '')}
+          {filterState.locations?.map((loc) => (
+            <span key={loc} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+              {loc}
               <X 
                 className="w-3.5 h-3.5 cursor-pointer hover:text-rose-600" 
-                onClick={() => setFilterState({ location: 'All Austin' })} 
+                onClick={() => setFilterState({ 
+                  locations: filterState.locations?.filter(l => l !== loc) || []
+                })} 
               />
             </span>
-          )}
+          ))}
         </div>
 
         <div className="text-xs text-slate-500 font-medium">
