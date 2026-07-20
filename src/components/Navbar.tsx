@@ -166,7 +166,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
                 )}
               </div>
               <div className="hidden lg:block text-left">
-                <span className="block text-[11px] text-white/70 font-semibold leading-none">Approvals</span>
                 <span className="text-sm font-extrabold text-white leading-none mt-0.5 block">My Products</span>
               </div>
             </button>
@@ -187,7 +186,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
                 <Calendar className="w-7 h-7 text-white group-hover:scale-105 transition-transform stroke-[2]" />
               </div>
               <div className="hidden lg:block text-left">
-                <span className="block text-[11px] text-white/70 font-semibold leading-none">Timings</span>
                 <span className="text-sm font-extrabold text-white leading-none mt-0.5 block">Past Rentals</span>
               </div>
             </button>
@@ -301,6 +299,17 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
                       <p className="px-4 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         My Account & Hub
                       </p>
+                      <button
+                        onClick={() => handleNav('asset-cash')}
+                        className="w-full text-left px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
+                      >
+                        <span className="flex items-center gap-3">
+                          <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-[10px] shrink-0">₹</span>
+                          Asset Cash Details
+                        </span>
+                        <span className="font-bold text-emerald-600">₹{user.assetCash || 0}</span>
+                      </button>
+
                       <button
                         onClick={() => handleNav('dashboard')}
                         className="w-full text-left px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-3"
@@ -418,7 +427,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
             className="flex items-center justify-center gap-1 py-1.5 px-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-all cursor-pointer border border-white/15 shadow-sm"
           >
             <Calendar className="w-4 h-4 text-white stroke-[2.5] shrink-0" />
-            <span className="text-[11px] font-bold tracking-tight truncate">Timings</span>
+            <span className="text-[11px] font-bold tracking-tight truncate">Past Rentals</span>
           </button>
 
           {/* List Product */}
@@ -459,7 +468,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
               )}
             </div>
             <div className="text-left leading-none">
-              <span className="block text-[10px] text-white/70 font-semibold">Approvals</span>
               <span className="text-xs font-extrabold text-white">My Products</span>
             </div>
           </button>
@@ -477,7 +485,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
           >
             <Calendar className="w-5 h-5 text-white stroke-[2] shrink-0" />
             <div className="text-left leading-none">
-              <span className="block text-[10px] text-white/70 font-semibold">Timings</span>
               <span className="text-xs font-extrabold text-white">Past Rentals</span>
             </div>
           </button>

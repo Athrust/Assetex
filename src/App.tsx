@@ -13,6 +13,7 @@ import { AddTool } from './pages/AddTool';
 import { MyBookings } from './pages/MyBookings';
 import { BookingRequests } from './pages/BookingRequests';
 import { Profile } from './pages/Profile';
+import { AssetCash } from './pages/AssetCash';
 
 const MainContent: React.FC = () => {
   const { user } = useApp();
@@ -113,6 +114,9 @@ const MainContent: React.FC = () => {
         )}
         {activePage === 'profile' && (
           <Profile onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+        )}
+        {activePage === 'asset-cash' && (
+          <AssetCash onNavigate={handleNavigate} />
         )}
       </main>
 

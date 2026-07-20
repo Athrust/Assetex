@@ -15,7 +15,12 @@ const userSchema = new mongoose.Schema({
   responseRate: { type: String, default: '100%' },
   verified: { type: Boolean, default: true },
   memberSince: { type: String, default: 'Jul 2026' },
-  password: { type: String, select: false }
+  password: { type: String, select: false },
+  assetCash: { type: Number, default: 0 },
+  assetCashLedger: [{
+    amount: { type: Number, required: true },
+    expiresAt: { type: Date, required: true }
+  }]
 }, {
   timestamps: true
 });

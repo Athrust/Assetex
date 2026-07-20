@@ -3,7 +3,7 @@
     "owner-1": {
       "id": "owner-1",
       "name": "Marcus Vance",
-      "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      "avatar": "/images/default-avatar.png",
       "rating": 4.9,
       "reviewsCount": 48,
       "responseTime": "Usually responds within 1 hour",
@@ -16,7 +16,7 @@
     "owner-2": {
       "id": "owner-2",
       "name": "Elena Rostova",
-      "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80",
+      "avatar": "/images/default-avatar.png",
       "rating": 4.8,
       "reviewsCount": 32,
       "responseTime": "Usually responds within 2 hours",
@@ -29,7 +29,7 @@
     "owner-3": {
       "id": "owner-3",
       "name": "David K. Chen",
-      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+      "avatar": "/images/default-avatar.png",
       "rating": 4.7,
       "reviewsCount": 19,
       "responseTime": "Usually responds within 3 hours",
@@ -42,7 +42,7 @@
     "user-alex": {
       "id": "user-alex",
       "name": "Alex Rivera",
-      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "avatar": "/images/default-avatar.png",
       "rating": 4.9,
       "reviewsCount": 14,
       "responseTime": "Usually responds within 1 hour",
@@ -51,20 +51,27 @@
       "memberSince": "Feb 2024",
       "city": "Austin, TX — Hyde Park",
       "bio": "Full-stack developer by day, home improver and woodworker on weekends. I love both lending out my Makita kit and renting heavy fabrication tools when I need them."
+    },
+    "user-1784573317360": {
+      "id": "user-1784573317360",
+      "name": "The Athrust",
+      "email": "muleatharva8055@gmail.com",
+      "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKmUgHBdv-KWdp_0AxJ8pz7RyNmJsVjQECTkCpX6Fl8op6en3BF=s96-c",
+      "city": "Austin, TX — South Congress",
+      "verified": true,
+      "rating": 5,
+      "reviewsCount": 0
     }
   },
   "currentUser": {
-    "id": "user-alex",
-    "name": "Alex Rivera",
-    "email": "alex.rivera@assetex.io",
-    "phone": "+1 (512) 847-2930",
-    "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-    "city": "Austin, TX — Hyde Park",
-    "bio": "Full-stack developer by day, home improver and woodworker on weekends. I love both lending out my Makita kit and renting heavy fabrication tools when I need them.",
-    "rating": 4.9,
-    "reviewsCount": 14,
+    "id": "user-1784573317360",
+    "name": "The Athrust",
+    "email": "muleatharva8055@gmail.com",
+    "avatar": "https://lh3.googleusercontent.com/a/ACg8ocKmUgHBdv-KWdp_0AxJ8pz7RyNmJsVjQECTkCpX6Fl8op6en3BF=s96-c",
+    "city": "Austin, TX — South Congress",
     "verified": true,
-    "memberSince": "Feb 2024"
+    "rating": 5,
+    "reviewsCount": 0
   },
   "listings": [],
   "bookings": []

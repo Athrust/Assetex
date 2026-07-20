@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { User, Mail, Phone, Lock, MapPin, CheckCircle2, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 interface SignUpProps {
   onNavigate: (page: string) => void;
 }
 
 export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
-  const { signup } = useApp();
+  const { signup, loginWithGoogle } = useApp();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,6 +78,37 @@ export const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-200 border-b-2 border-b-slate-300 shadow-elevated space-y-4">
+        
+        <div className="flex justify-center w-full">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (credentialResponse.credential) {
+                setLoading(true);
+                const result = await loginWithGoogle(credentialResponse.credential);
+                setLoading(false);
+                if (result === true) {
+                  onNavigate('dashboard');
+                } else if (typeof result === 'string') {
+                  setError(result);
+                }
+              }
+            }}
+            onError={() => {
+              setError('Google Login Failed');
+            }}
+            useOneTap
+          />
+        </div>
+
+        <div className="relative pt-2 pb-1">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200"></div>
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white px-2 text-slate-500 font-medium uppercase tracking-wider">Or sign up with email</span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-xs font-bold text-navy-800 uppercase tracking-wider block">First Name <span className="text-rose-500">*</span></label>

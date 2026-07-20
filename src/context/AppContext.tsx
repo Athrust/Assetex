@@ -25,6 +25,7 @@ interface AppContextType {
 
   // Auth actions
   login: (email: string, password?: string) => Promise<boolean | string>;
+  loginWithGoogle: (token: string) => Promise<boolean | string>;
   logout: () => void;
   signup: (name: string, email: string, phone: string, password?: string, city?: string) => Promise<void | string>;
   updateUserProfile: (data: Partial<UserAccount>) => Promise<void>;
@@ -36,7 +37,7 @@ interface AppContextType {
   toggleListingStatus: (id: string) => Promise<void>;
 
   // Booking actions
-  requestBooking: (toolId: string, startDate: string, endDate: string, message: string, rentalType?: 'daily' | 'hourly', hours?: number) => Promise<Booking>;
+  requestBooking: (toolId: string, startDate: string, endDate: string, message: string, rentalType?: 'daily' | 'hourly', hours?: number, appliedAssetCash?: number) => Promise<Booking>;
   updateBookingStatus: (bookingId: string, status: BookingStatus) => Promise<void>;
 
   // Filter actions
@@ -58,7 +59,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [user, setUser] = useState<UserAccount | null>(() => {
     const savedUser = localStorage.getItem('assetex_user');
     if (savedUser) {
-      try { return JSON.parse(savedUser); } catch (e) { /* ignore */ }
+      try { 
+        const parsed = JSON.parse(savedUser); 
+        parsed.avatar = '/images/default-avatar.png';
+        return parsed;
+      } catch (e) { /* ignore */ }
     }
     return null;
   });
@@ -154,7 +159,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         name: formattedName,
         email: email,
         phone: '+1 (512) 555-0199',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        avatar: '/images/default-avatar.png',
         rating: 5.0,
         reviewsCount: 14,
         city: 'Mumbai',
@@ -164,6 +169,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
       setUser(fallbackUser);
       return true;
+    }
+  };
+
+  const loginWithGoogle = async (token: string): Promise<boolean | string> => {
+    try {
+      const res = await fetch(`${API_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+        return true;
+      }
+      return data.error || 'Google Login failed. Please try again.';
+    } catch (error) {
+      console.warn('Backend login unreachable for Google auth:', error);
+      return 'Network error. Please make sure the backend is running.';
     }
   };
 
@@ -191,7 +215,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         name: name || 'Atharv Mule',
         email: email,
         phone: phone || '+1 (512) 555-0199',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        avatar: '/images/default-avatar.png',
         rating: 5.0,
         reviewsCount: 0,
         city: city || 'Mumbai',
@@ -229,7 +253,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       owner: {
         id: user.id,
         name: user.name,
-        avatar: user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        avatar: user.avatar || '/images/default-avatar.png',
         rating: user.rating || 5.0,
         reviewsCount: user.reviewsCount || 0,
         responseTime: 'Usually responds within 1 hour',
@@ -302,7 +326,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await updateListing(id, { status: newStatus });
   };
 
-  const requestBooking = async (toolId: string, startDate: string, endDate: string, message: string, rentalType: 'daily' | 'hourly' = 'daily', hours?: number): Promise<Booking> => {
+  const requestBooking = async (toolId: string, startDate: string, endDate: string, message: string, rentalType: 'daily' | 'hourly' = 'daily', hours?: number, appliedAssetCash: number = 0): Promise<Booking> => {
     if (!user) throw new Error("User not logged in");
     const targetTool = listings.find(l => l.id === toolId);
     if (!targetTool) throw new Error("Tool not found");
@@ -334,10 +358,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       totalEstimate,
       renterId: user.id,
       renterName: user.name,
-      renterAvatar: user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      renterAvatar: user.avatar || '/images/default-avatar.png',
       renterRating: user.rating || 5.0,
       ownerId: targetTool.ownerId || 'user-alex',
-      ownerName: targetTool.owner?.name || 'Tool Owner'
+      ownerName: targetTool.owner?.name || 'Tool Owner',
+      appliedAssetCash
     };
 
     try {
@@ -348,6 +373,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
       if (res.ok) {
         const newBooking = await res.json();
+        // If the backend returned an updated user (with new assetCash balance), update the context
+        if (newBooking.updatedUser) {
+          setUser(newBooking.updatedUser);
+          delete newBooking.updatedUser;
+        }
         setBookings(prev => [newBooking, ...prev]);
         return newBooking;
       } else {
@@ -390,6 +420,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         bookings,
         filterState,
         login,
+        loginWithGoogle,
         logout,
         signup,
         updateUserProfile,

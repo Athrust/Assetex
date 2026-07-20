@@ -47,6 +47,7 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
   const [message, setMessage] = useState('Hi! I have a weekend DIY project and would love to rent your equipment. I can pick up at your convenience.');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [requestSubmitted, setRequestSubmitted] = useState(false);
+  const [applyAssetCash, setApplyAssetCash] = useState(true);
 
   if (!tool) {
     return (
@@ -72,6 +73,12 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
   } else {
     totalEstimate = days * tool.dailyRate;
   }
+  
+  const subtotal = totalEstimate + Math.round(totalEstimate * 0.1);
+  const userAssetCash = user?.assetCash || 0;
+  const appliedCash = applyAssetCash ? Math.min(userAssetCash, subtotal) : 0;
+  const finalTotal = subtotal - appliedCash;
+  const cashbackEarned = Math.round(finalTotal * 0.10);
 
   const handleQuickDuration = (numDays: number) => {
     const s = new Date(startDate);
@@ -86,7 +93,7 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
       onNavigate('login');
       return;
     }
-    await requestBooking(tool.id, startDate, endDate, message, rentalType, hours);
+    await requestBooking(tool.id, startDate, endDate, message, rentalType, hours, appliedCash);
     setRequestSubmitted(true);
   };
 
@@ -113,7 +120,7 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 max-w-md mx-auto text-left space-y-3">
             <div className="flex justify-between text-xs text-slate-500 pb-2 border-b border-slate-200">
               <span>Status: <strong className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Pending Approval</strong></span>
-              <span>Total Estimate: <strong className="text-slate-900">₹{totalEstimate}</strong></span>
+              <span>Total Estimate: <strong className="text-slate-900">₹{finalTotal}</strong></span>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-900 font-semibold">
               <Clock className="w-4 h-4 text-blue-600 shrink-0" />
@@ -239,7 +246,7 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <img 
-                  src={tool.owner?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'} 
+                  src={tool.owner?.avatar || '/images/default-avatar.png'} 
                   alt={tool.owner?.name} 
                   className="w-16 h-16 rounded-2xl object-cover ring-4 ring-brand-500/10"
                 />
@@ -604,16 +611,37 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
               {/* Estimated Total Breakdown */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5 text-sm">
                 <div className="flex justify-between text-slate-600">
-                  <span>{rentalType === 'hourly' && tool.hourlyRate ? `₹${tool.hourlyRate} × ${hours} hours` : `₹${tool.dailyRate} × ${days} ${days === 1 ? 'day' : 'days'}`}</span>
-                  <span className="font-semibold">₹{totalEstimate}</span>
+                  <span>{rentalType === 'hourly' && tool.hourlyRate ? `Rental Charges (${hours} hours)` : `Rental Charges (${days} ${days === 1 ? 'day' : 'days'})`}</span>
+                  <span className="font-semibold">₹{subtotal}</span>
                 </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>Assetex Protection & Service Fee (10%)</span>
-                  <span className="font-semibold">₹{Math.round(totalEstimate * 0.1)}</span>
-                </div>
+                {userAssetCash > 0 && (
+                  <div className="pt-2 border-t border-slate-200">
+                    <label className="flex items-center justify-between cursor-pointer group">
+                      <div className="flex items-center gap-2">
+                        <input 
+                          type="checkbox" 
+                          checked={applyAssetCash}
+                          onChange={(e) => setApplyAssetCash(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                        />
+                        <span className="text-slate-700 group-hover:text-slate-900 transition-colors">Apply Asset Cash (Balance: ₹{userAssetCash})</span>
+                      </div>
+                      <span className="font-semibold text-emerald-600">
+                        {applyAssetCash ? `-₹${appliedCash}` : '₹0'}
+                      </span>
+                    </label>
+                  </div>
+                )}
                 <div className="flex justify-between font-extrabold text-base pt-2 border-t border-slate-200 text-navy-900">
                   <span>Estimated Total</span>
-                  <span className="text-brand-700">₹{totalEstimate + Math.round(totalEstimate * 0.1)}</span>
+                  <span className="text-brand-700">₹{finalTotal}</span>
+                </div>
+                <div className="flex justify-between items-center bg-emerald-50 text-emerald-800 p-2 rounded-lg text-xs font-semibold mt-2 border border-emerald-100">
+                  <span className="flex items-center gap-1.5">
+                    <Award className="w-3.5 h-3.5" />
+                    Asset Cash Earned
+                  </span>
+                  <span>+₹{cashbackEarned}</span>
                 </div>
               </div>
 

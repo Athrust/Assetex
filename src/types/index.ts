@@ -90,6 +90,8 @@ export interface UserAccount {
   reviewsCount: number;
   verified: boolean;
   memberSince: string;
+  assetCash?: number;
+  assetCashLedger?: { amount: number, expiresAt: string }[];
 }
 
 export interface FilterState {

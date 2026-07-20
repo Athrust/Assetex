@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import User from './models/User.js';
 import Listing from './models/Listing.js';
 import Booking from './models/Booking.js';
+import { OAuth2Client } from 'google-auth-library';
 
 const __filename = (typeof import.meta !== 'undefined' && import.meta.url) 
   ? fileURLToPath(import.meta.url) 
@@ -23,6 +24,8 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'assetex_secure_jwt_secret_key_2026';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/assetex';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -50,13 +53,39 @@ app.use('/uploads', express.static(uploadsDir));
 let useMongoDB = false;
 let cachedDb = null;
 
+function recalculateAssetCash(user) {
+  if (!user.assetCashLedger) {
+    user.assetCashLedger = [];
+  }
+  const now = new Date();
+  
+  // Clean up expired ledger entries
+  user.assetCashLedger = user.assetCashLedger.filter(entry => {
+    return new Date(entry.expiresAt) > now;
+  });
+  
+  // If user has a legacy balance but no active ledger entries, convert it
+  if (user.assetCash > 0 && user.assetCashLedger.length === 0) {
+    const legacyExpiry = new Date();
+    legacyExpiry.setDate(legacyExpiry.getDate() + 30);
+    user.assetCashLedger.push({
+      amount: user.assetCash,
+      expiresAt: legacyExpiry
+    });
+  }
+
+  // Recalculate total
+  user.assetCash = user.assetCashLedger.reduce((sum, entry) => sum + (entry.amount || 0), 0);
+  return user;
+}
+
 async function ensureMongoConnection() {
   if (cachedDb && mongoose.connection.readyState === 1) {
     useMongoDB = true;
     return cachedDb;
   }
-  const uri = process.env.MONGODB_URI;
-  if (!uri || uri.includes('127.0.0.1')) {
+  const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/assetex';
+  if (!uri) {
     useMongoDB = false;
     return null;
   }
@@ -94,7 +123,7 @@ const initialOwners = {
     name: 'Marcus Vance',
     email: 'marcus.vance@assetex.io',
     password: 'Assetex123',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.9,
     reviewsCount: 48,
     responseTime: 'Usually responds within 1 hour',
@@ -103,13 +132,14 @@ const initialOwners = {
     memberSince: 'Oct 2023',
     city: 'Austin, TX — South Congress',
     bio: 'Mechanical engineer and prototyping enthusiast. I own industrial-grade fabrication and 3D printing equipment that sits idle on weekdays. Happy to share tips on print optimization!',
+    assetCash: 0
   },
   'owner-2': {
     id: 'owner-2',
     name: 'Elena Rostova',
     email: 'elena.rostova@assetex.io',
     password: 'Assetex123',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.8,
     reviewsCount: 32,
     responseTime: 'Usually responds within 2 hours',
@@ -118,13 +148,14 @@ const initialOwners = {
     memberSince: 'Jan 2024',
     city: 'Austin, TX — Eastside',
     bio: 'Custom furniture builder and woodworker. I maintain all my cutting tools and blades in razor-sharp condition. Treat them with respect and safety first!',
+    assetCash: 0
   },
   'owner-3': {
     id: 'owner-3',
     name: 'David K. Chen',
     email: 'david.chen@assetex.io',
     password: 'Assetex123',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.7,
     reviewsCount: 19,
     responseTime: 'Usually responds within 3 hours',
@@ -133,13 +164,14 @@ const initialOwners = {
     memberSince: 'Mar 2024',
     city: 'Austin, TX — North Loop',
     bio: 'Weekend landscaper and home renovation DIYer. Why spend ₹65,000 on a commercial pressure washer or tile saw for a 2-day patio job? Borrow mine anytime.',
+    assetCash: 0
   },
   'user-alex': {
     id: 'user-alex',
     name: 'Alex Rivera',
     email: 'alex.rivera@assetex.io',
     password: 'Assetex123',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.9,
     reviewsCount: 14,
     responseTime: 'Usually responds within 1 hour',
@@ -148,6 +180,7 @@ const initialOwners = {
     memberSince: 'Feb 2024',
     city: 'Austin, TX — Hyde Park',
     bio: 'Full-stack developer by day, home improver and woodworker on weekends. I love both lending out my Makita kit and renting heavy fabrication tools when I need them.',
+    assetCash: 0
   }
 };
 
@@ -156,13 +189,14 @@ const initialCurrentUser = {
   name: 'Alex Rivera',
   email: 'alex.rivera@assetex.io',
   phone: '+1 (512) 847-2930',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+  avatar: '/images/default-avatar.png',
   city: 'Austin, TX — Hyde Park',
   bio: 'Full-stack developer by day, home improver and woodworker on weekends. I love both lending out my Makita kit and renting heavy fabrication tools when I need them.',
   rating: 4.9,
   reviewsCount: 14,
   verified: true,
   memberSince: 'Feb 2024',
+  assetCash: 0
 };
 
 const initialListings = [
@@ -193,7 +227,7 @@ const initialListings = [
       {
         id: 'rev-1',
         authorName: 'Sam K.',
-        authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '2 weeks ago',
         comment: 'Marcus had the printer tuned to perfection! Printed 12 custom drone frame brackets over the weekend without a single failed layer.'
@@ -201,7 +235,7 @@ const initialListings = [
       {
         id: 'rev-2',
         authorName: 'Jessica T.',
-        authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '1 month ago',
         comment: 'Super easy pickup and Marcus gave a 5-minute walkthrough that made my first rental effortless. Will definitely rent again.'
@@ -234,7 +268,7 @@ const initialListings = [
       {
         id: 'rev-3',
         authorName: 'Chris M.',
-        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '3 weeks ago',
         comment: 'Used this to engrave custom leather wallets for groomsmen gifts. Clean cuts and excellent air assist!'
@@ -267,7 +301,7 @@ const initialListings = [
       {
         id: 'rev-4',
         authorName: 'Brad H.',
-        authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '1 month ago',
         comment: 'Blade was sharp as a razor. Took down two fallen oak branches after the storm in under an hour. Elena provided chain oil too!'
@@ -454,7 +488,7 @@ const initialBookings = [
     toolCategory: '3D Printing & Fabrication',
     renterId: 'user-alex',
     renterName: 'Alex Rivera',
-    renterAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 4.9,
     ownerId: 'owner-1',
     ownerName: 'Marcus Vance',
@@ -475,7 +509,7 @@ const initialBookings = [
     toolCategory: 'Power Tools & Carpentry',
     renterId: 'user-alex',
     renterName: 'Alex Rivera',
-    renterAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 4.9,
     ownerId: 'owner-2',
     ownerName: 'Elena Rostova',
@@ -496,7 +530,7 @@ const initialBookings = [
     toolCategory: 'Power Tools & Carpentry',
     renterId: 'renter-99',
     renterName: 'Jordan Taylor',
-    renterAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 4.8,
     ownerId: 'user-alex',
     ownerName: 'Alex Rivera',
@@ -517,7 +551,7 @@ const initialBookings = [
     toolCategory: 'Power Tools & Carpentry',
     renterId: 'renter-88',
     renterName: 'Priya Patel',
-    renterAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 5.0,
     ownerId: 'user-alex',
     ownerName: 'Alex Rivera',
@@ -615,6 +649,8 @@ app.post('/api/auth/login', async (req, res) => {
         return res.status(401).json({ error: 'Incorrect password. Please try again.' });
       }
       const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+      recalculateAssetCash(user);
+      await user.save();
       const userObj = user.toObject();
       delete userObj.password;
       return res.json({ ...userObj, token });
@@ -624,8 +660,91 @@ app.post('/api/auth/login', async (req, res) => {
     }
   }
 
-  // Fallback — database not connected
-  return res.status(503).json({ error: 'Database is not connected. Please try again later.' });
+  // Fallback — JSON db
+  const db = readDb();
+  const allUsers = [db.currentUser, ...Object.values(db.owners)];
+  const user = allUsers.find(u => u && u.email === email);
+  
+  if (!user) {
+    return res.status(401).json({ error: 'No account found with this email. Please sign up first.' });
+  }
+  if (user.password !== password) {
+    return res.status(401).json({ error: 'Incorrect password. Please try again.' });
+  }
+  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+  let userObj = { ...user };
+  userObj = recalculateAssetCash(userObj);
+  delete userObj.password;
+  db.currentUser = userObj;
+  writeDb(db);
+  return res.json({ ...userObj, token });
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token is required' });
+  
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+    
+    if (useMongoDB) {
+      let user = await User.findOne({ email });
+      if (!user) {
+        // Sign-up
+        user = await User.create({
+          id: `user-${Date.now()}`,
+          name,
+          email,
+          avatar: picture || '/images/default-avatar.png',
+          city: 'Austin, TX — South Congress',
+          verified: true
+        });
+      }
+      
+      const jwtToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+      recalculateAssetCash(user);
+      await user.save();
+      const userObj = user.toObject();
+      delete userObj.password;
+      return res.json({ ...userObj, token: jwtToken });
+    }
+    
+    // Fallback — JSON db
+    const db = readDb();
+    const allUsers = [db.currentUser, ...Object.values(db.owners)];
+    let user = allUsers.find(u => u && u.email === email);
+    
+    if (!user) {
+      user = {
+        id: `user-${Date.now()}`,
+        name,
+        email,
+        avatar: picture || '/images/default-avatar.png',
+        city: 'Austin, TX — South Congress',
+        verified: true,
+        rating: 5.0,
+        reviewsCount: 0,
+        assetCash: 0
+      };
+      db.owners[user.id] = user;
+    }
+    
+    const jwtToken = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    let userObj = { ...user };
+    userObj = recalculateAssetCash(userObj);
+    delete userObj.password;
+    db.currentUser = userObj;
+    writeDb(db);
+    return res.json({ ...userObj, token: jwtToken });
+  } catch (err) {
+    console.error('Google Auth Error:', err);
+    return res.status(401).json({ error: 'Invalid Google token' });
+  }
 });
 
 app.post('/api/auth/signup', async (req, res) => {
@@ -666,8 +785,39 @@ app.post('/api/auth/signup', async (req, res) => {
     }
   }
 
-  // Fallback — database not connected
-  return res.status(503).json({ error: 'Database is not connected. Please try again later.' });
+  // Fallback — JSON db
+  const db = readDb();
+  const allUsers = [db.currentUser, ...Object.values(db.owners)];
+  const existing = allUsers.find(u => u && u.email === email);
+  if (existing) {
+    return res.status(409).json({ error: 'An account with this email already exists. Please log in instead.' });
+  }
+  
+  const id = `user-${Date.now()}`;
+  const user = {
+    id,
+    name,
+    email,
+    phone: phone || '',
+    city: city || 'Austin, TX — South Congress',
+    bio: `New member of Assetex based in ${city || 'Austin, TX'}.`,
+    rating: 5.0,
+    reviewsCount: 0,
+    verified: true,
+    memberSince: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    password,
+    avatar: '/images/default-avatar.png',
+    assetCash: 0
+  };
+  
+  db.owners[id] = user;
+  
+  const token = jwt.sign({ id, email }, JWT_SECRET, { expiresIn: '7d' });
+  const userRes = { ...user };
+  delete userRes.password;
+  db.currentUser = userRes;
+  writeDb(db);
+  return res.status(201).json({ ...userRes, token });
 });
 
 app.get('/api/auth/profile', async (req, res) => {
@@ -675,12 +825,20 @@ app.get('/api/auth/profile', async (req, res) => {
     try {
       let user = await User.findOne({ id: initialCurrentUser.id });
       if (!user) user = initialCurrentUser;
+      if (user instanceof mongoose.Document) {
+        recalculateAssetCash(user);
+        await user.save();
+      }
       return res.json(user);
     } catch (err) {
       return res.status(500).json({ error: 'Error fetching profile' });
     }
   }
   const db = readDb();
+  if (db.currentUser) {
+    db.currentUser = recalculateAssetCash(db.currentUser);
+    writeDb(db);
+  }
   res.json(db.currentUser);
 });
 
@@ -770,7 +928,7 @@ app.post('/api/listings', async (req, res) => {
   const owner = req.body.owner || db.owners[ownerId] || (db.currentUser && db.owners[db.currentUser.id] ? db.owners[db.currentUser.id] : {
     id: ownerId,
     name: db.currentUser ? db.currentUser.name : 'Atharv Mule',
-    avatar: db.currentUser ? db.currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    avatar: db.currentUser ? db.currentUser.avatar : '/images/default-avatar.png',
     rating: 5.0,
     reviewsCount: 0,
     responseTime: 'Usually responds within 1 hour',
@@ -884,6 +1042,42 @@ app.post('/api/bookings', async (req, res) => {
       const days = req.body.days || Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
       const totalEstimate = req.body.totalEstimate || (days * (targetTool.dailyRate || 2800));
 
+      const appliedAssetCash = req.body.appliedAssetCash || 0;
+      const subtotal = totalEstimate + Math.round(totalEstimate * 0.10);
+      const paidAmount = Math.max(0, subtotal - appliedAssetCash);
+      const cashbackEarned = Math.round(paidAmount * 0.10);
+
+      if (renter) {
+        if (!renter.assetCashLedger) renter.assetCashLedger = [];
+        
+        // 1. Deduct spent Asset Cash from oldest expiring entries
+        let amountToDeduct = appliedAssetCash;
+        if (amountToDeduct > 0) {
+          renter.assetCashLedger.sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt));
+          for (let entry of renter.assetCashLedger) {
+            if (amountToDeduct <= 0) break;
+            if (entry.amount > 0) {
+              const deducted = Math.min(entry.amount, amountToDeduct);
+              entry.amount -= deducted;
+              amountToDeduct -= deducted;
+            }
+          }
+        }
+        
+        // 2. Add newly earned Asset Cash
+        if (cashbackEarned > 0) {
+          const expiry = new Date();
+          expiry.setDate(expiry.getDate() + 30);
+          renter.assetCashLedger.push({
+            amount: cashbackEarned,
+            expiresAt: expiry
+          });
+        }
+        
+        recalculateAssetCash(renter);
+        await renter.save();
+      }
+
       const newBooking = await Booking.create({
         id: `book-${Date.now()}`,
         toolId: targetTool.id,
@@ -905,7 +1099,10 @@ app.post('/api/bookings', async (req, res) => {
         message,
         createdAt: new Date().toISOString().split('T')[0]
       });
-      return res.status(201).json(newBooking);
+      return res.status(201).json({
+        ...newBooking.toObject(),
+        updatedUser: renter ? renter.toObject() : undefined
+      });
     } catch (err) {
       console.error('Create booking MongoDB error:', err);
       return res.status(500).json({ error: 'Failed to create booking' });
@@ -934,8 +1131,73 @@ app.post('/api/bookings', async (req, res) => {
 
   const renterId = req.body.renterId || (db.currentUser ? db.currentUser.id : 'user-alex');
   const renterName = req.body.renterName || (db.currentUser ? db.currentUser.name : 'Ayush');
-  const renterAvatar = req.body.renterAvatar || (db.currentUser ? db.currentUser.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
+  const renterAvatar = req.body.renterAvatar || (db.currentUser ? db.currentUser.avatar : '/images/default-avatar.png');
   const renterRating = req.body.renterRating || 5.0;
+
+  const appliedAssetCash = req.body.appliedAssetCash || 0;
+  const subtotal = totalEstimate + Math.round(totalEstimate * 0.10);
+  const paidAmount = Math.max(0, subtotal - appliedAssetCash);
+  const cashbackEarned = Math.round(paidAmount * 0.10);
+  
+  let updatedUser = undefined;
+  if (db.currentUser && db.currentUser.id === renterId) {
+    if (!db.currentUser.assetCashLedger) db.currentUser.assetCashLedger = [];
+    
+    // Deduct
+    let amountToDeduct = appliedAssetCash;
+    if (amountToDeduct > 0) {
+      db.currentUser.assetCashLedger.sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt));
+      for (let entry of db.currentUser.assetCashLedger) {
+        if (amountToDeduct <= 0) break;
+        if (entry.amount > 0) {
+          const deducted = Math.min(entry.amount, amountToDeduct);
+          entry.amount -= deducted;
+          amountToDeduct -= deducted;
+        }
+      }
+    }
+    
+    // Earn
+    if (cashbackEarned > 0) {
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 30);
+      db.currentUser.assetCashLedger.push({
+        amount: cashbackEarned,
+        expiresAt: expiry
+      });
+    }
+    
+    db.currentUser = recalculateAssetCash(db.currentUser);
+    updatedUser = db.currentUser;
+  }
+  if (db.owners[renterId]) {
+    if (!db.owners[renterId].assetCashLedger) db.owners[renterId].assetCashLedger = [];
+    
+    let amountToDeduct = appliedAssetCash;
+    if (amountToDeduct > 0) {
+      db.owners[renterId].assetCashLedger.sort((a, b) => new Date(a.expiresAt) - new Date(b.expiresAt));
+      for (let entry of db.owners[renterId].assetCashLedger) {
+        if (amountToDeduct <= 0) break;
+        if (entry.amount > 0) {
+          const deducted = Math.min(entry.amount, amountToDeduct);
+          entry.amount -= deducted;
+          amountToDeduct -= deducted;
+        }
+      }
+    }
+    
+    if (cashbackEarned > 0) {
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 30);
+      db.owners[renterId].assetCashLedger.push({
+        amount: cashbackEarned,
+        expiresAt: expiry
+      });
+    }
+    
+    db.owners[renterId] = recalculateAssetCash(db.owners[renterId]);
+    if (!updatedUser) updatedUser = db.owners[renterId];
+  }
 
   const newBooking = {
     id: `book-${Date.now()}`,
@@ -961,7 +1223,10 @@ app.post('/api/bookings', async (req, res) => {
 
   db.bookings.unshift(newBooking);
   writeDb(db);
-  res.status(201).json(newBooking);
+  res.status(201).json({
+    ...newBooking,
+    updatedUser
+  });
 });
 
 app.put('/api/bookings/:id', async (req, res) => {

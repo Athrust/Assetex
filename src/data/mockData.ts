@@ -4,7 +4,7 @@ export const mockOwners: Record<string, Owner> = {
   'owner-1': {
     id: 'owner-1',
     name: 'Marcus Vance',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.9,
     reviewsCount: 48,
     responseTime: 'Usually responds within 1 hour',
@@ -17,7 +17,7 @@ export const mockOwners: Record<string, Owner> = {
   'owner-2': {
     id: 'owner-2',
     name: 'Elena Rostova',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.8,
     reviewsCount: 32,
     responseTime: 'Usually responds within 2 hours',
@@ -30,7 +30,7 @@ export const mockOwners: Record<string, Owner> = {
   'owner-3': {
     id: 'owner-3',
     name: 'David K. Chen',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.7,
     reviewsCount: 19,
     responseTime: 'Usually responds within 3 hours',
@@ -43,7 +43,7 @@ export const mockOwners: Record<string, Owner> = {
   'user-alex': {
     id: 'user-alex',
     name: 'Alex Rivera',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    avatar: '/images/default-avatar.png',
     rating: 4.9,
     reviewsCount: 14,
     responseTime: 'Usually responds within 1 hour',
@@ -60,7 +60,7 @@ export const initialCurrentUser: UserAccount = {
   name: 'Alex Rivera',
   email: 'alex.rivera@assetex.io',
   phone: '+1 (512) 847-2930',
-  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+  avatar: '/images/default-avatar.png',
   city: 'Austin, TX — Hyde Park',
   bio: 'Full-stack developer by day, home improver and woodworker on weekends. I love both lending out my Makita kit and renting heavy fabrication tools when I need them.',
   rating: 4.9,
@@ -99,7 +99,7 @@ export const initialListings: ToolListing[] = [
       {
         id: 'rev-1',
         authorName: 'Sam K.',
-        authorAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '2 weeks ago',
         comment: 'Marcus had the printer tuned to perfection! Printed 12 custom drone frame brackets over the weekend without a single failed layer.'
@@ -107,7 +107,7 @@ export const initialListings: ToolListing[] = [
       {
         id: 'rev-2',
         authorName: 'Jessica T.',
-        authorAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '1 month ago',
         comment: 'Super easy pickup and Marcus gave a 5-minute walkthrough that made my first rental effortless. Will definitely rent again.'
@@ -142,7 +142,7 @@ export const initialListings: ToolListing[] = [
       {
         id: 'rev-3',
         authorName: 'Chris M.',
-        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '3 weeks ago',
         comment: 'Used this to engrave custom leather wallets for groomsmen gifts. Clean cuts and excellent air assist!'
@@ -177,7 +177,7 @@ export const initialListings: ToolListing[] = [
       {
         id: 'rev-4',
         authorName: 'Brad H.',
-        authorAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+        authorAvatar: '/images/default-avatar.png',
         rating: 5,
         date: '1 month ago',
         comment: 'Blade was sharp as a razor. Took down two fallen oak branches after the storm in under an hour. Elena provided chain oil too!'
@@ -380,7 +380,7 @@ export const initialBookings: Booking[] = [
     toolCategory: '3D Printing & Fabrication',
     renterId: 'user-alex',
     renterName: 'Alex Rivera',
-    renterAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 4.9,
     ownerId: 'owner-1',
     ownerName: 'Marcus Vance',
@@ -401,7 +401,7 @@ export const initialBookings: Booking[] = [
     toolCategory: 'Power Tools & Carpentry',
     renterId: 'user-alex',
     renterName: 'Alex Rivera',
-    renterAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 4.9,
     ownerId: 'owner-2',
     ownerName: 'Elena Rostova',
@@ -423,7 +423,7 @@ export const initialBookings: Booking[] = [
     toolCategory: 'Power Tools & Carpentry',
     renterId: 'renter-99',
     renterName: 'Jordan Taylor',
-    renterAvatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 4.8,
     ownerId: 'user-alex',
     ownerName: 'Alex Rivera',
@@ -444,7 +444,7 @@ export const initialBookings: Booking[] = [
     toolCategory: 'Power Tools & Carpentry',
     renterId: 'renter-88',
     renterName: 'Priya Patel',
-    renterAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    renterAvatar: '/images/default-avatar.png',
     renterRating: 5.0,
     ownerId: 'user-alex',
     ownerName: 'Alex Rivera',

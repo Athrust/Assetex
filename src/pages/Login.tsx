@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Lock, Mail, AlertCircle } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 interface LoginProps {
   onNavigate: (page: string) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
-  const { login } = useApp();
+  const { login, loginWithGoogle } = useApp();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -53,6 +54,37 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
       )}
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-200 border-b-2 border-b-slate-300 shadow-elevated space-y-5">
+        
+        <div className="flex justify-center w-full">
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              if (credentialResponse.credential) {
+                setLoading(true);
+                const result = await loginWithGoogle(credentialResponse.credential);
+                setLoading(false);
+                if (result === true) {
+                  onNavigate('dashboard');
+                } else if (typeof result === 'string') {
+                  setError(result);
+                }
+              }
+            }}
+            onError={() => {
+              setError('Google Login Failed');
+            }}
+            useOneTap
+          />
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200"></div>
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-white px-2 text-slate-500 font-medium uppercase tracking-wider">Or continue with email</span>
+          </div>
+        </div>
+
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">Email Address</label>
           <div className="relative">

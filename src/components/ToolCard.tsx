@@ -74,7 +74,7 @@ export const ToolCard: React.FC<ToolCardProps> = ({ tool, onSelect }) => {
         <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img 
-              src={tool.owner?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'} 
+              src={tool.owner?.avatar || '/images/default-avatar.png'} 
               alt={tool.owner?.name || 'Owner'} 
               className="w-7 h-7 rounded-full object-cover ring-2 ring-brand-500/20"
             />
