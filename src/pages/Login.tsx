@@ -35,7 +35,7 @@ export const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     <div className="max-w-md mx-auto py-16 px-4 sm:px-6 space-y-8 animate-in fade-in duration-300">
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-3.5 mb-3">
-          <img src="/logo.png?v=assetex_3d_v2" alt="ASSETEX Logo" className="h-16 w-auto object-contain drop-shadow" />
+          <img src="/logo.png?v=assetex_v7" alt="ASSETEX Logo" className="h-16 w-auto object-contain drop-shadow" />
           <span className="font-outfit text-3xl font-black tracking-tight text-slate-900">
             ASSETEX
           </span>

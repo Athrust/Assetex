@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Navbar } from './components/Navbar';
 import { Home } from './pages/Home';
@@ -16,7 +18,7 @@ import { Profile } from './pages/Profile';
 import { AssetCash } from './pages/AssetCash';
 
 const MainContent: React.FC = () => {
-  const { user } = useApp();
+  const { user, isLoading, error, retryConnection } = useApp();
 
   // Restore page state from localStorage on mount
   const [activePage, setActivePage] = useState<string>(() => {
@@ -79,44 +81,66 @@ const MainContent: React.FC = () => {
       />
 
       <main className="flex-1">
-        {activePage === 'home' && (
-          <Home onSelectTool={handleSelectTool} onNavigate={handleNavigate} />
-        )}
-        {activePage === 'browse' && (
-          <Browse onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'tool-detail' && selectedToolId && (
-          <ToolDetail toolId={selectedToolId} onNavigate={handleNavigate} />
-        )}
-        {activePage === 'how-it-works' && (
-          <HowItWorks onNavigate={handleNavigate} />
-        )}
-        {activePage === 'login' && (
-          <Login onNavigate={handleNavigate} />
-        )}
-        {activePage === 'signup' && (
-          <SignUp onNavigate={handleNavigate} />
-        )}
-        {activePage === 'dashboard' && (
-          <Dashboard onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'my-listings' && (
-          <MyListings onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'add-tool' && (
-          <AddTool onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'my-bookings' && (
-          <MyBookings onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'booking-requests' && (
-          <BookingRequests onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'profile' && (
-          <Profile onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
-        )}
-        {activePage === 'asset-cash' && (
-          <AssetCash onNavigate={handleNavigate} />
+        {isLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4">
+            <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+            <p className="text-slate-500 font-medium">Connecting to Database...</p>
+          </div>
+        ) : error ? (
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[60vh] gap-4 animate-in fade-in zoom-in duration-300">
+            <div className="text-red-500 bg-red-50 p-4 rounded-full">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <p className="text-slate-700 font-medium text-lg">{error}</p>
+            <button 
+              onClick={retryConnection}
+              className="mt-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow-sm hover:shadow transition-all"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <>
+            {activePage === 'home' && (
+              <Home onSelectTool={handleSelectTool} onNavigate={handleNavigate} />
+            )}
+            {activePage === 'browse' && (
+              <Browse onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'tool-detail' && selectedToolId && (
+              <ToolDetail toolId={selectedToolId} onNavigate={handleNavigate} />
+            )}
+            {activePage === 'how-it-works' && (
+              <HowItWorks onNavigate={handleNavigate} />
+            )}
+            {activePage === 'login' && (
+              <Login onNavigate={handleNavigate} />
+            )}
+            {activePage === 'signup' && (
+              <SignUp onNavigate={handleNavigate} />
+            )}
+            {activePage === 'dashboard' && (
+              <Dashboard onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'my-listings' && (
+              <MyListings onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'add-tool' && (
+              <AddTool onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'my-bookings' && (
+              <MyBookings onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'booking-requests' && (
+              <BookingRequests onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'profile' && (
+              <Profile onNavigate={handleNavigate} onSelectTool={handleSelectTool} />
+            )}
+            {activePage === 'asset-cash' && (
+              <AssetCash onNavigate={handleNavigate} />
+            )}
+          </>
         )}
       </main>
 
@@ -125,7 +149,7 @@ const MainContent: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-navy-800">
           <div className="space-y-4 md:col-span-1">
             <div className="flex items-center gap-3">
-              <img src="/logo.png?v=assetex_3d_v2" alt="Assetex Logo" className="h-14 w-auto object-contain drop-shadow-md" />
+              <img src="/logo.png?v=assetex_v7" alt="Assetex Logo" className="h-14 w-auto object-contain drop-shadow-md" />
               <span className="text-2xl font-extrabold text-white tracking-tight">Assetex</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">

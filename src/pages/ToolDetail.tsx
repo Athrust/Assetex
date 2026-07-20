@@ -74,7 +74,8 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
     totalEstimate = days * tool.dailyRate;
   }
   
-  const subtotal = totalEstimate + Math.round(totalEstimate * 0.1);
+  const platformFee = Math.round(totalEstimate * 0.1);
+  const subtotal = totalEstimate + platformFee;
   const userAssetCash = user?.assetCash || 0;
   const appliedCash = applyAssetCash ? Math.min(userAssetCash, subtotal) : 0;
   const finalTotal = subtotal - appliedCash;
@@ -612,7 +613,11 @@ export const ToolDetail: React.FC<ToolDetailProps> = ({ toolId, onNavigate }) =>
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5 text-sm">
                 <div className="flex justify-between text-slate-600">
                   <span>{rentalType === 'hourly' && tool.hourlyRate ? `Rental Charges (${hours} hours)` : `Rental Charges (${days} ${days === 1 ? 'day' : 'days'})`}</span>
-                  <span className="font-semibold">₹{subtotal}</span>
+                  <span className="font-semibold">₹{totalEstimate}</span>
+                </div>
+                <div className="flex justify-between text-slate-600">
+                  <span>Platform Fee & Taxes (10%)</span>
+                  <span className="font-semibold">₹{platformFee}</span>
                 </div>
                 {userAssetCash > 0 && (
                   <div className="pt-2 border-t border-slate-200">

@@ -22,6 +22,9 @@ interface AppContextType {
   listings: ToolListing[];
   bookings: Booking[];
   filterState: FilterState;
+  isLoading: boolean;
+  error: string | null;
+  retryConnection: () => void;
 
   // Auth actions
   login: (email: string, password?: string) => Promise<boolean | string>;
@@ -67,58 +70,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     return null;
   });
-  const [listings, setListings] = useState<ToolListing[]>(() => {
-    const saved = localStorage.getItem('assetex_listings');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
-    }
-    return [];
-  });
-  const [bookings, setBookings] = useState<Booking[]>(() => {
-    const saved = localStorage.getItem('assetex_bookings');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { /* ignore */ }
-    }
-    return [];
-  });
+  const [listings, setListings] = useState<ToolListing[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [filterState, setFilterStateState] = useState<FilterState>(defaultFilterState);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Save listings & bookings to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('assetex_listings', JSON.stringify(listings));
-  }, [listings]);
-
-  useEffect(() => {
-    localStorage.setItem('assetex_bookings', JSON.stringify(bookings));
-  }, [bookings]);
+  const fetchInitialData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [listingsRes, bookingsRes] = await Promise.all([
+        fetch(`${API_URL}/listings`),
+        fetch(`${API_URL}/bookings`)
+      ]);
+      if (listingsRes.ok) {
+        const listingsData = await listingsRes.json();
+        if (Array.isArray(listingsData)) {
+          setListings(listingsData);
+        }
+      } else {
+        throw new Error('Failed to load listings');
+      }
+      if (bookingsRes.ok) {
+        const bookingsData = await bookingsRes.json();
+        if (Array.isArray(bookingsData)) {
+          setBookings(bookingsData);
+        }
+      }
+    } catch (err) {
+      console.warn('Backend data API unreachable:', err);
+      setError('Could not connect to the database server.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Fetch data on mount
   useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const [listingsRes, bookingsRes] = await Promise.all([
-          fetch(`${API_URL}/listings`),
-          fetch(`${API_URL}/bookings`)
-        ]);
-        if (listingsRes.ok) {
-          const listingsData = await listingsRes.json();
-          if (Array.isArray(listingsData)) {
-            setListings(listingsData);
-          }
-        }
-        if (bookingsRes.ok) {
-          const bookingsData = await bookingsRes.json();
-          if (Array.isArray(bookingsData)) {
-            setBookings(bookingsData);
-          }
-        }
-      } catch (error) {
-        console.warn('Backend data API unreachable (static hosting), using cached/fallback listings:', error);
-      }
-    };
-
     fetchInitialData();
   }, []);
+
+  const retryConnection = () => {
+    fetchInitialData();
+  };
 
   // Save user to localStorage whenever it changes
   useEffect(() => {
@@ -419,6 +414,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         listings,
         bookings,
         filterState,
+        isLoading,
+        error,
+        retryConnection,
         login,
         loginWithGoogle,
         logout,

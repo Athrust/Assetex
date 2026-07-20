@@ -91,11 +91,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activePage, setActivePage, setSe
         {/* Brand Logo (Left) */}
         <div
           onClick={handleLogoClick}
-          className="flex items-center gap-0 sm:gap-0.5 cursor-pointer group shrink-0"
+          className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
         >
-          <img src="/logo.png?v=assetex_3d_v2" alt="Assetex Logo" className="h-[5rem] w-auto object-contain translate-y-1.5 sm:translate-y-2 -mr-2 sm:-mr-3 drop-shadow-md group-hover:scale-105 transition-all duration-200" />
-          <div className="-ml-1 sm:-ml-1.5">
-            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
+          <img src="/logo.png?v=assetex_v7" alt="Assetex Logo" className="h-10 sm:h-12 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-all duration-200" />
+          <div>
+            <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-white flex items-center">
               Assetex
             </span>
             <span className="block text-[9px] sm:text-[10px] font-semibold text-blue-200 tracking-wider uppercase -mt-1">

@@ -91,8 +91,11 @@ async function ensureMongoConnection() {
   }
   try {
     cachedDb = await mongoose.connect(uri, { 
-      serverSelectionTimeoutMS: 8000,
-      bufferCommands: false
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+      maxPoolSize: 10,
+      autoIndex: false
     });
     useMongoDB = true;
     const userCount = await User.countDocuments();
